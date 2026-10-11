@@ -1,5 +1,6 @@
 -- Janela: Loja VIP (gamepasses e produtos de Robux).
 
+local MarketplaceService = game:GetService("MarketplaceService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Shared = ReplicatedStorage:WaitForChild("Shared")
@@ -8,6 +9,32 @@ local UI = require(script.Parent.Parent.Controllers.UI)
 
 local Robux = {}
 local passButtons = {}
+local prices = {} -- [key] = preço real em Robux (vem do Roblox, já com preço regional)
+local fetched = false
+
+-- Busca o preço atual do item no Roblox (não fica escrito no código)
+local function fetchPrice(id: number, infoType: Enum.InfoType): number?
+	if id == 0 then
+		return nil
+	end
+	local ok, info = pcall(function()
+		return MarketplaceService:GetProductInfoAsync(id, infoType)
+	end)
+	if not ok then
+		ok, info = pcall(function()
+			return MarketplaceService:GetProductInfo(id, infoType)
+		end)
+	end
+	if ok and type(info) == "table" and type(info.PriceInRobux) == "number" then
+		return info.PriceInRobux
+	end
+	return nil
+end
+
+local function priceText(key: string): string
+	local price = prices[key]
+	return price and ("R$ " .. price) or "Comprar"
+end
 
 local CATEGORY_COLORS = {
 	["Dinheiro"] = UI.Colors.Green,
@@ -53,23 +80,45 @@ function Robux:Build(App, content)
 	end
 
 	for i, pass in ipairs(Monetization.Passes) do
-		local _, b = card(pages.Passes, i, pass.Name, pass.Description, UI.Colors.Purple, "R$ " .. pass.Robux, function()
+		local _, b = card(pages.Passes, i, pass.Name, pass.Description, UI.Colors.Purple, "...", function()
 			App:Send("PromptPass", pass.Key)
 		end)
-		passButtons[pass.Key] = { Button = b, Price = pass.Robux }
+		passButtons[pass.Key] = { Button = b, Id = pass.Id }
 	end
 	for i, product in ipairs(Monetization.Products) do
 		local color = CATEGORY_COLORS[product.Category] or UI.Colors.Blue
-		card(pages.Products, i, product.Name, "[" .. product.Category .. "] " .. product.Description, color, "R$ " .. product.Robux, function()
+		local _, b = card(pages.Products, i, product.Name, "[" .. product.Category .. "] " .. product.Description, color, "...", function()
 			App:Send("PromptProduct", product.Key)
 		end)
+		self.ProductButtons = self.ProductButtons or {}
+		self.ProductButtons[product.Key] = { Button = b, Id = product.Id }
 	end
+end
+
+-- Busca os preços ao abrir a loja pela primeira vez
+function Robux:OnOpen()
+	if fetched then
+		return
+	end
+	fetched = true
+	task.spawn(function()
+		for key, info in pairs(passButtons) do
+			prices[key] = fetchPrice(info.Id, Enum.InfoType.GamePass)
+		end
+		for key, info in pairs(self.ProductButtons or {}) do
+			prices[key] = fetchPrice(info.Id, Enum.InfoType.Product)
+			info.Button.Text = priceText(key)
+		end
+		if self.App.State then
+			self:Update(self.App.State)
+		end
+	end)
 end
 
 function Robux:Update(state)
 	for key, info in pairs(passButtons) do
 		local owned = state.Passes[key]
-		info.Button.Text = owned and "✔ Você tem" or ("R$ " .. info.Price)
+		info.Button.Text = owned and "✔ Você tem" or priceText(key)
 		UI.setButtonColor(info.Button, owned and UI.Colors.Gray or UI.Colors.Green)
 	end
 end

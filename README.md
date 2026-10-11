@@ -49,7 +49,7 @@ Jogo no estilo "Roube um Brainrot / Roube um Ovo": compre dragões na esteira, j
 | Congelar Todos | 129 | Congela os outros por 8s |
 | Abrir Todas as Bases | 199 | Destranca todas as bases por 30s |
 
-Os preços são sugestões. O preço real é o que você colocar no Creator Hub; para o botão da loja mostrar o mesmo valor, altere também o campo `Robux` em `Monetization`.
+Os preços são sugestões. A loja do jogo busca o preço real direto do Roblox, então funciona com os **Preços Gerenciados** (preço regional) ligados.
 
 ### 🔊 Ativar os sons
 1. Os áudios estão em `assets/audio/` (15 efeitos + música).
