@@ -79,7 +79,7 @@ Os preços são sugestões. A loja do jogo busca o preço real direto do Roblox,
 - **Salvamento automático** com proteção contra perda de dados.
 
 ## 🎟️ Códigos
-Edite em **ServerScriptService > Server > Services > RewardService** (tabela `Codes`). Atuais: `LANCAMENTO`, `DRAGAO`, `ROUBEUMDRAGAO`, `OBRIGADO`.
+Edite em **ServerScriptService > Server > Services > RewardService** (tabela `Codes`). Atuais: `LANCAMENTO`, `DRAGAO`, `ROUBEUMDRAGAO`, `OBRIGADO`, `RELEASE`, `LAUNCH`, `STEALADRAGON`, `THANKYOU`.
 
 ## ⚙️ Ajustar o jogo
 Quase tudo fica em **ReplicatedStorage > Shared**:

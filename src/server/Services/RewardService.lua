@@ -13,10 +13,16 @@ local RewardService = {}
 
 -- Códigos: CODIGO = recompensa. Adicione novos códigos aqui a cada atualização!
 RewardService.Codes = {
+	-- Lançamento (português)
 	LANCAMENTO = { Cash = 5000 },
 	DRAGAO = { Cash = 1500 },
 	ROUBEUMDRAGAO = { Dragon = "Raro" },
 	OBRIGADO = { Cash = 3000 },
+	-- Lançamento (inglês)
+	RELEASE = { Cash = 10000 },
+	LAUNCH = { Cash = 5000 },
+	STEALADRAGON = { Dragon = "Raro" },
+	THANKYOU = { Cash = 3000 },
 }
 
 local joinTime = {} -- [player] = server time
