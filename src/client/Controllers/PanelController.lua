@@ -1,6 +1,8 @@
 -- Abre/fecha as janelas (Loja, Robux, Rebirth, Índice, Presentes, Códigos, Config, Admin).
 
+local GuiService = game:GetService("GuiService")
 local ProximityPromptService = game:GetService("ProximityPromptService")
+local UserInputService = game:GetService("UserInputService")
 
 local UI = require(script.Parent.UI)
 
@@ -92,13 +94,33 @@ function PanelController:Open(name: string)
 	if p.Module.Update and self.App.State then
 		p.Module:Update(self.App.State)
 	end
+	-- controle (console): já seleciona o primeiro botão da janela
+	if UserInputService.GamepadEnabled then
+		task.defer(function()
+			for _, d in ipairs(p.Frame.Content:GetDescendants()) do
+				if d:IsA("GuiButton") and d.Visible then
+					GuiService.SelectedObject = d
+					return
+				end
+			end
+		end)
+	end
 end
 
 function PanelController:Close()
 	if openName then
-		panels[openName].Frame.Visible = false
+		local frame = panels[openName].Frame
+		frame.Visible = false
 		openName = nil
+		local selected = GuiService.SelectedObject
+		if selected and selected:IsDescendantOf(frame) then
+			GuiService.SelectedObject = nil
+		end
 	end
+end
+
+function PanelController:GetOpen(): string?
+	return openName
 end
 
 function PanelController:IsOpen(name: string): boolean

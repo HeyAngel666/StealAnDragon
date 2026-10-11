@@ -78,6 +78,14 @@ Os preços são sugestões. A loja do jogo busca o preço real direto do Roblox,
 - **Painel Admin** (só o dono vê): iniciar eventos, meteoros, congelar, abrir bases, soltar qualquer dragão, dar dragão a todos, avisos. Use para fazer "admin abuse" ao vivo.
 - **Salvamento automático** com proteção contra perda de dados.
 
+## 🎮 Controle (console)
+- **Y / Triângulo**: abre o menu lateral (navegue com o direcional, **A** para abrir).
+- **B / Bola**: fecha a janela.
+- **Direcional ↓**: coletar tudo (dentro da base).
+- **X / Quadrado**: comprar / roubar / vender (botões que aparecem perto dos dragões).
+- Andar, pular e usar itens (L1/R1 troca, R2 usa) funcionam pelo próprio Roblox.
+- Lembre de marcar **Console** em Configurações básicas > Dispositivos no Creator Hub.
+
 ## 🎟️ Códigos
 Edite em **ServerScriptService > Server > Services > RewardService** (tabela `Codes`). Atuais: `RELEASE`, `LAUNCH`, `DRAGON`, `STEALADRAGON`, `THANKYOU`.
 

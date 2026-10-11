@@ -162,6 +162,7 @@ function UI.scroll(props)
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
+		Selectable = false,
 	}
 	for k, v in pairs(props or {}) do
 		defaults[k] = v

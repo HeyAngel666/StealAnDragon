@@ -5337,6 +5337,102 @@ return EffectsController
           </Item>
           <Item class="ModuleScript" referent="43">
             <Properties>
+              <string name="Name">GamepadController</string>
+              <string name="Source"><![CDATA[-- Suporte a controle (Xbox / PlayStation / controle no PC).
+--   Y (Triângulo) = abrir o menu lateral (navegue com o direcional e aperte A)
+--   B (Bola)      = fechar a janela / sair do menu
+--   Direcional ↓  = coletar tudo (dentro da sua base)
+-- Andar, pular, usar itens (R2) e trocar itens (L1/R1) já funcionam pelo Roblox.
+
+local ContextActionService = game:GetService("ContextActionService")
+local GuiService = game:GetService("GuiService")
+local UserInputService = game:GetService("UserInputService")
+
+local UI = require(script.Parent.UI)
+
+local GamepadController = {}
+
+local function menuSelected(hud): boolean
+	local selected = GuiService.SelectedObject
+	return selected ~= nil and selected:IsDescendantOf(hud.MenuButtons.Shop.Parent)
+end
+
+function GamepadController:Init(App)
+	self.App = App
+	self.Hint = UI.label({
+		Name = "GamepadHint",
+		AnchorPoint = Vector2.new(0, 1),
+		Position = UDim2.new(0, 12, 1, -12),
+		Size = UDim2.fromOffset(460, 28),
+		Text = "Ⓨ Menu   Ⓑ Fechar   ⬇ Coletar tudo   ⓧ Comprar/Roubar",
+		TextXAlignment = Enum.TextXAlignment.Left,
+		MaxText = 20,
+		Visible = false,
+		Parent = App.Gui,
+	})
+end
+
+function GamepadController:Start(App)
+	local hud = App.Controllers.HudController
+	local panels = App.Controllers.PanelController
+
+	local function updateHint()
+		local last = UserInputService:GetLastInputType()
+		self.Hint.Visible = UserInputService.GamepadEnabled and last.Name:find("Gamepad") ~= nil
+	end
+	updateHint()
+	UserInputService.LastInputTypeChanged:Connect(updateHint)
+	UserInputService.GamepadConnected:Connect(updateHint)
+	UserInputService.GamepadDisconnected:Connect(updateHint)
+
+	-- Y: abre/fecha a seleção do menu lateral
+	ContextActionService:BindAction("GamepadMenu", function(_, state)
+		if state ~= Enum.UserInputState.Begin then
+			return Enum.ContextActionResult.Pass
+		end
+		if panels:GetOpen() then
+			panels:Close()
+		end
+		if menuSelected(hud) then
+			GuiService.SelectedObject = nil
+		else
+			GuiService.SelectedObject = hud.MenuButtons.Shop
+		end
+		return Enum.ContextActionResult.Sink
+	end, false, Enum.KeyCode.ButtonY)
+
+	-- B: fecha janela ou sai do menu
+	ContextActionService:BindAction("GamepadBack", function(_, state)
+		if state ~= Enum.UserInputState.Begin then
+			return Enum.ContextActionResult.Pass
+		end
+		if panels:GetOpen() then
+			panels:Close()
+			return Enum.ContextActionResult.Sink
+		end
+		if GuiService.SelectedObject then
+			GuiService.SelectedObject = nil
+			return Enum.ContextActionResult.Sink
+		end
+		return Enum.ContextActionResult.Pass
+	end, false, Enum.KeyCode.ButtonB)
+
+	-- Direcional para baixo: coletar tudo (só quando não está navegando na interface)
+	ContextActionService:BindAction("GamepadCollect", function(_, state)
+		if state ~= Enum.UserInputState.Begin or GuiService.SelectedObject then
+			return Enum.ContextActionResult.Pass
+		end
+		App:Send("CollectAll")
+		return Enum.ContextActionResult.Sink
+	end, false, Enum.KeyCode.DPadDown)
+end
+
+return GamepadController
+]]></string>
+            </Properties>
+          </Item>
+          <Item class="ModuleScript" referent="44">
+            <Properties>
               <string name="Name">HudController</string>
               <string name="Source"><![CDATA[-- Interface fixa: dinheiro, renda, botões do menu, evento atual, status da base.
 
@@ -5558,7 +5654,7 @@ return HudController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="44">
+          <Item class="ModuleScript" referent="45">
             <Properties>
               <string name="Name">NotifyController</string>
               <string name="Source"><![CDATA[-- Mensagens na tela: pequenas (canto) e grandes (centro).
@@ -5684,12 +5780,14 @@ return NotifyController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="45">
+          <Item class="ModuleScript" referent="46">
             <Properties>
               <string name="Name">PanelController</string>
               <string name="Source"><![CDATA[-- Abre/fecha as janelas (Loja, Robux, Rebirth, Índice, Presentes, Códigos, Config, Admin).
 
+local GuiService = game:GetService("GuiService")
 local ProximityPromptService = game:GetService("ProximityPromptService")
+local UserInputService = game:GetService("UserInputService")
 
 local UI = require(script.Parent.UI)
 
@@ -5781,13 +5879,33 @@ function PanelController:Open(name: string)
 	if p.Module.Update and self.App.State then
 		p.Module:Update(self.App.State)
 	end
+	-- controle (console): já seleciona o primeiro botão da janela
+	if UserInputService.GamepadEnabled then
+		task.defer(function()
+			for _, d in ipairs(p.Frame.Content:GetDescendants()) do
+				if d:IsA("GuiButton") and d.Visible then
+					GuiService.SelectedObject = d
+					return
+				end
+			end
+		end)
+	end
 end
 
 function PanelController:Close()
 	if openName then
-		panels[openName].Frame.Visible = false
+		local frame = panels[openName].Frame
+		frame.Visible = false
 		openName = nil
+		local selected = GuiService.SelectedObject
+		if selected and selected:IsDescendantOf(frame) then
+			GuiService.SelectedObject = nil
+		end
 	end
+end
+
+function PanelController:GetOpen(): string?
+	return openName
 end
 
 function PanelController:IsOpen(name: string): boolean
@@ -5798,7 +5916,7 @@ return PanelController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="46">
+          <Item class="ModuleScript" referent="47">
             <Properties>
               <string name="Name">SoundController</string>
               <string name="Source"><![CDATA[-- Toca efeitos sonoros e a música de fundo (IDs em Shared/Sounds).
@@ -5883,7 +6001,7 @@ return SoundController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="47">
+          <Item class="ModuleScript" referent="48">
             <Properties>
               <string name="Name">TutorialController</string>
               <string name="Source"><![CDATA[-- Tutorial para jogadores novos, com seta guiando cada passo.
@@ -5985,7 +6103,7 @@ return TutorialController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="48">
+          <Item class="ModuleScript" referent="49">
             <Properties>
               <string name="Name">UI</string>
               <string name="Source"><![CDATA[-- Pequena biblioteca para criar a interface com o mesmo estilo em tudo.
@@ -6152,6 +6270,7 @@ function UI.scroll(props)
 		CanvasSize = UDim2.new(),
 		AutomaticCanvasSize = Enum.AutomaticSize.Y,
 		ScrollingDirection = Enum.ScrollingDirection.Y,
+		Selectable = false,
 	}
 	for k, v in pairs(props or {}) do
 		defaults[k] = v
@@ -6169,7 +6288,7 @@ return UI
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="49">
+          <Item class="ModuleScript" referent="50">
             <Properties>
               <string name="Name">WorldController</string>
               <string name="Source"><![CDATA[-- Coisas do mundo no cliente: quais botões (E/F) aparecem, barreira de laser,
@@ -6451,7 +6570,7 @@ return WorldController
             </Properties>
           </Item>
         </Item>
-        <Item class="LocalScript" referent="50">
+        <Item class="LocalScript" referent="51">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[-- Inicia todos os controladores do cliente.
@@ -6507,6 +6626,7 @@ local ORDER = {
 	"EffectsController",
 	"WorldController",
 	"TutorialController",
+	"GamepadController",
 }
 
 for _, name in ipairs(ORDER) do
@@ -6533,11 +6653,11 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="51">
+        <Item class="Folder" referent="52">
           <Properties>
             <string name="Name">Panels</string>
           </Properties>
-          <Item class="ModuleScript" referent="52">
+          <Item class="ModuleScript" referent="53">
             <Properties>
               <string name="Name">Admin</string>
               <string name="Source"><![CDATA[-- Janela: painel de admin (só aparece para o dono do jogo/admins).
@@ -6637,7 +6757,7 @@ return Admin
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="53">
+          <Item class="ModuleScript" referent="54">
             <Properties>
               <string name="Name">Codes</string>
               <string name="Source"><![CDATA[-- Janela: resgatar códigos.
@@ -6678,7 +6798,7 @@ return Codes
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="54">
+          <Item class="ModuleScript" referent="55">
             <Properties>
               <string name="Name">Index</string>
               <string name="Source"><![CDATA[-- Janela: Índice de dragões (coleção). Completar uma raridade dá +5% de renda.
@@ -6775,7 +6895,7 @@ return Index
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="55">
+          <Item class="ModuleScript" referent="56">
             <Properties>
               <string name="Name">Rebirth</string>
               <string name="Source"><![CDATA[-- Janela: Rebirth.
@@ -6856,7 +6976,7 @@ return Rebirth
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="56">
+          <Item class="ModuleScript" referent="57">
             <Properties>
               <string name="Name">Rewards</string>
               <string name="Source"><![CDATA[-- Janela: Presentes por tempo jogado + prêmio diário.
@@ -6947,7 +7067,7 @@ return Rewards
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="57">
+          <Item class="ModuleScript" referent="58">
             <Properties>
               <string name="Name">Robux</string>
               <string name="Source"><![CDATA[-- Janela: Loja VIP (gamepasses e produtos de Robux).
@@ -7079,7 +7199,7 @@ return Robux
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="58">
+          <Item class="ModuleScript" referent="59">
             <Properties>
               <string name="Name">Settings</string>
               <string name="Source"><![CDATA[-- Janela: configurações (música e efeitos sonoros).
@@ -7120,7 +7240,7 @@ return Settings
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="59">
+          <Item class="ModuleScript" referent="60">
             <Properties>
               <string name="Name">Shop</string>
               <string name="Source"><![CDATA[-- Janela: Loja de Equipamentos (dinheiro do jogo).
@@ -7186,7 +7306,7 @@ return Shop
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="60">
+  <Item class="Workspace" referent="61">
     <Properties>
       <string name="Name">Workspace</string>
       <float name="Gravity">196.2</float>
