@@ -79,7 +79,7 @@ Os preços são sugestões. A loja do jogo busca o preço real direto do Roblox,
 - **Salvamento automático** com proteção contra perda de dados.
 
 ## 🎟️ Códigos
-Edite em **ServerScriptService > Server > Services > RewardService** (tabela `Codes`). Atuais: `LANCAMENTO`, `DRAGAO`, `ROUBEUMDRAGAO`, `OBRIGADO`, `RELEASE`, `LAUNCH`, `STEALADRAGON`, `THANKYOU`.
+Edite em **ServerScriptService > Server > Services > RewardService** (tabela `Codes`). Atuais: `RELEASE`, `LAUNCH`, `DRAGON`, `STEALADRAGON`, `THANKYOU`.
 
 ## ⚙️ Ajustar o jogo
 Quase tudo fica em **ReplicatedStorage > Shared**:
@@ -96,7 +96,7 @@ Admins extras: coloque o UserId em `Config.AdminUserIds`.
 - Os itens de "Trollar" vendem bem em servidor cheio: todo mundo vê o aviso de quem comprou.
 
 ## 📝 Descrição sugerida para a página do jogo
-> 🐉 ROUBE UM DRAGÃO! Compre dragões na esteira, junte dinheiro e roube os dragões raros das outras bases! Tranque sua base, use tapas, armadilhas e raios congelantes para proteger seu tesouro. 32 dragões, mutações de Ouro, Diamante, Lava e Arco-Íris, eventos a cada 9 minutos e Rebirths! 🎟️ Código: LANCAMENTO
+> 🐉 ROUBE UM DRAGÃO! Compre dragões na esteira, junte dinheiro e roube os dragões raros das outras bases! Tranque sua base, use tapas, armadilhas e raios congelantes para proteger seu tesouro. 32 dragões, mutações de Ouro, Diamante, Lava e Arco-Íris, eventos a cada 9 minutos e Rebirths! 🎟️ Code: RELEASE
 
 ---
 
