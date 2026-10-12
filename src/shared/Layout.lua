@@ -6,11 +6,11 @@ local Layout = {}
 Layout.GroundY = 0 -- topo do chão
 Layout.ConveyorStart = Vector3.new(-185, 1, 0)
 Layout.ConveyorEnd = Vector3.new(185, 1, 0)
-Layout.ConveyorWidth = 12
+Layout.ConveyorWidth = 18
 
 Layout.BaseSize = 64
 Layout.BaseWallHeight = 15
-Layout.EntranceWidth = 18
+Layout.EntranceWidth = 58 -- frente aberta (laser cobre a frente toda)
 
 Layout.PlazaCenter = Vector3.new(225, 0, 0)
 

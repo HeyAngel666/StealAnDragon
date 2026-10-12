@@ -87,29 +87,6 @@ local function buildTree(parent: Instance, pos: Vector3, scale: number)
 	end
 end
 
-local function buildPine(parent: Instance, pos: Vector3, scale: number)
-	P({ Name = "Trunk", Shape = Enum.PartType.Cylinder, Size = Vector3.new(4 * scale, 1.4 * scale, 1.4 * scale),
-		CFrame = CFrame.new(pos + Vector3.new(0, 2 * scale, 0)) * CFrame.Angles(0, 0, math.pi / 2),
-		Color = Color3.fromRGB(100, 70, 45), Material = Enum.Material.Wood, Parent = parent })
-	local green = Color3.fromRGB(40, rng:NextInteger(110, 140), 70)
-	for i = 0, 3 do
-		local w = (9 - i * 2) * scale
-		P({ Name = "PineLayer", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2.6 * scale, w, w),
-			CFrame = CFrame.new(pos + Vector3.new(0, (4 + i * 2.6) * scale, 0)) * CFrame.Angles(0, 0, math.pi / 2),
-			Color = green, Material = Enum.Material.Grass, Parent = parent })
-	end
-end
-
-local function buildRock(parent: Instance, pos: Vector3, size: number)
-	for _ = 1, 3 do
-		local s = size * rng:NextNumber(0.5, 1)
-		P({ Name = "Rock", Size = Vector3.new(s, s * 0.7, s * 0.9),
-			CFrame = CFrame.new(pos + Vector3.new(rng:NextNumber(-1, 1) * size * 0.4, s * 0.25, rng:NextNumber(-1, 1) * size * 0.4))
-				* CFrame.Angles(rng:NextNumber(-0.4, 0.4), rng:NextNumber(0, 6), rng:NextNumber(-0.4, 0.4)),
-			Color = Color3.fromRGB(125, 120, 115), Material = Enum.Material.Slate, Parent = parent })
-	end
-end
-
 local FLOWER_COLORS = { Color3.fromRGB(255, 90, 120), Color3.fromRGB(255, 220, 60), Color3.fromRGB(150, 110, 255), Color3.fromRGB(255, 255, 255), Color3.fromRGB(90, 180, 255) }
 
 local function buildFlowers(parent: Instance, center: Vector3, radius: number, count: number)
@@ -121,75 +98,19 @@ local function buildFlowers(parent: Instance, center: Vector3, radius: number, c
 	end
 end
 
-local function buildTerrain()
+local GRASS = Color3.fromRGB(95, 200, 70)
+
+local function buildTerrain(parent: Instance)
 	Terrain:Clear()
-	pcall(function()
-		Terrain.Decoration = true -- grama animada
-	end)
-	Terrain.WaterColor = Color3.fromRGB(40, 150, 200)
-	Terrain.WaterTransparency = 0.4
-	Terrain.WaterWaveSize = 0.2
-	-- chão de grama
-	Terrain:FillBlock(CFrame.new(20, -8, 0), Vector3.new(840, 16, 680), Enum.Material.Grass)
-	-- rios atrás das bases (além do limite do mapa) com areia nas margens
-	for _, z in ipairs({ -142, 142 }) do
-		Terrain:FillBlock(CFrame.new(20, -2, z), Vector3.new(840, 4, 36), Enum.Material.Sand)
-		Terrain:FillBlock(CFrame.new(20, -4, z), Vector3.new(840, 8, 24), Enum.Material.Air)
-		Terrain:FillBlock(CFrame.new(20, -5, z), Vector3.new(840, 6, 24), Enum.Material.Water)
-	end
-	-- montanhas com neve em volta
-	for i = 0, 15 do
-		local x = -360 + i * 50 + rng:NextNumber(-10, 10)
-		for _, side in ipairs({ -1, 1 }) do
-			local z = side * rng:NextNumber(230, 280)
-			local r = rng:NextNumber(45, 75)
-			Terrain:FillBall(Vector3.new(x, -10, z), r, Enum.Material.Rock)
-			Terrain:FillBall(Vector3.new(x, r * 0.55, z), r * 0.45, Enum.Material.Snow)
-			Terrain:FillBall(Vector3.new(x + rng:NextNumber(-40, 40), -14, side * rng:NextNumber(185, 205)), rng:NextNumber(20, 32), Enum.Material.Grass)
+	-- chão verde liso, estilo clássico
+	P({ Name = "Ground", Size = Vector3.new(1000, 4, 800), Position = Vector3.new(20, -2, 0), Color = GRASS, Material = Enum.Material.SmoothPlastic, Parent = parent })
+	-- faixas de grama um pouco mais clara (efeito de gramado cortado)
+	for i = -9, 9 do
+		if i % 2 == 0 then
+			P({ Name = "GrassStripe", Size = Vector3.new(1000, 0.05, 20), Position = Vector3.new(20, 0.025, i * 40), Color = GRASS:Lerp(Color3.new(1, 1, 1), 0.08),
+				Material = Enum.Material.SmoothPlastic, CanCollide = false, Parent = parent })
 		end
 	end
-	for _, x in ipairs({ -420, 470 }) do
-		for z = -260, 260, 70 do
-			local r = rng:NextNumber(50, 80)
-			Terrain:FillBall(Vector3.new(x, -10, z), r, Enum.Material.Rock)
-			Terrain:FillBall(Vector3.new(x, r * 0.55, z), r * 0.45, Enum.Material.Snow)
-		end
-	end
-end
-
-local function buildVolcano(parent: Instance, pos: Vector3)
-	Terrain:FillBall(pos + Vector3.new(0, -30, 0), 110, Enum.Material.Basalt)
-	Terrain:FillBall(pos + Vector3.new(0, 40, 0), 60, Enum.Material.Basalt)
-	Terrain:FillBall(pos + Vector3.new(0, 95, 0), 24, Enum.Material.CrackedLava)
-	local lava = P({ Name = "VolcanoLava", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 30, 30),
-		CFrame = CFrame.new(pos + Vector3.new(0, 112, 0)) * CFrame.Angles(0, 0, math.pi / 2),
-		Color = Color3.fromRGB(255, 100, 20), Material = Enum.Material.Neon, CanCollide = false, Parent = parent })
-	local smoke = Instance.new("Smoke")
-	smoke.Size = 40
-	smoke.RiseVelocity = 14
-	smoke.Opacity = 0.25
-	smoke.Color = Color3.fromRGB(70, 60, 60)
-	smoke.Parent = lava
-	local fire = Instance.new("Fire")
-	fire.Size = 30
-	fire.Heat = 25
-	fire.Parent = lava
-	local light = Instance.new("PointLight")
-	light.Range = 60
-	light.Brightness = 3
-	light.Color = Color3.fromRGB(255, 120, 30)
-	light.Parent = lava
-end
-
-local function buildLamp(parent: Instance, pos: Vector3)
-	P({ Name = "LampPost", Size = Vector3.new(0.8, 12, 0.8), Position = pos + Vector3.new(0, 6, 0), Color = Color3.fromRGB(50, 45, 45), Material = Enum.Material.Metal, Parent = parent })
-	local bulb = P({ Name = "LampBulb", Shape = Enum.PartType.Ball, Size = Vector3.new(2, 2, 2), Position = pos + Vector3.new(0, 12.6, 0), Color = Color3.fromRGB(255, 200, 120),
-		Material = Enum.Material.Neon, Parent = parent })
-	local light = Instance.new("PointLight")
-	light.Range = 22
-	light.Brightness = 1.2
-	light.Color = Color3.fromRGB(255, 200, 140)
-	light.Parent = bulb
 end
 
 -- ===================== Esteira, caverna e portal =====================
@@ -202,36 +123,19 @@ local function buildConveyor(map: Instance)
 	local startX, endX = Layout.ConveyorStart.X, Layout.ConveyorEnd.X
 	local length = endX - startX
 	local width = Layout.ConveyorWidth
+	-- tapete vermelho (onde os dragões andam)
 	P({ Name = "Belt", Size = Vector3.new(length, 1, width), Position = Vector3.new((startX + endX) / 2, 0.5, 0),
-		Color = Color3.fromRGB(150, 30, 30), Material = Enum.Material.Fabric, Parent = folder })
+		Color = Color3.fromRGB(205, 35, 35), Material = Enum.Material.SmoothPlastic, Parent = folder })
+	P({ Name = "BeltCenter", Size = Vector3.new(length, 0.05, width - 4), Position = Vector3.new((startX + endX) / 2, 1.03, 0),
+		Color = Color3.fromRGB(225, 50, 50), Material = Enum.Material.SmoothPlastic, CanCollide = false, Parent = folder })
 	for _, side in ipairs({ -1, 1 }) do
-		P({ Name = "Edge", Size = Vector3.new(length, 1.3, 0.8), Position = Vector3.new((startX + endX) / 2, 0.65, side * (width / 2 + 0.4)),
-			Color = Color3.fromRGB(255, 170, 40), Material = Enum.Material.Neon, Parent = folder })
+		P({ Name = "Edge", Size = Vector3.new(length, 1.4, 1), Position = Vector3.new((startX + endX) / 2, 0.7, side * (width / 2 + 0.5)),
+			Color = Color3.fromRGB(245, 245, 245), Material = Enum.Material.SmoothPlastic, Parent = folder })
 	end
-	-- setas indicando a direção
-	for x = startX + 10, endX - 10, 16 do
-		local arrow = P({ ClassName = "WedgePart", Name = "Arrow", Size = Vector3.new(4, 0.15, 3), CanCollide = false,
-			CFrame = CFrame.new(x, 1.08, 0) * CFrame.Angles(0, -math.pi / 2, 0), Color = Color3.fromRGB(255, 210, 120),
-			Material = Enum.Material.Neon, Transparency = 0.3, Parent = folder })
-		arrow.CastShadow = false
-	end
-
-	-- arcos decorativos sobre a esteira
-	for x = startX + 40, endX - 30, 60 do
-		for _, side in ipairs({ -1, 1 }) do
-			P({ Name = "ArchPillar", Size = Vector3.new(2, 16, 2), Position = Vector3.new(x, 8, side * (width / 2 + 3)),
-				Color = Color3.fromRGB(70, 45, 35), Material = Enum.Material.Wood, Parent = folder })
-			local torch = P({ Name = "Torch", Shape = Enum.PartType.Ball, Size = Vector3.new(1.6, 1.6, 1.6), Position = Vector3.new(x, 16.8, side * (width / 2 + 3)),
-				Color = Color3.fromRGB(255, 160, 40), Material = Enum.Material.Neon, CanCollide = false, Parent = folder })
-			local fire = Instance.new("Fire")
-			fire.Size = 3
-			fire.Heat = 6
-			fire.Parent = torch
-		end
-		local beam = P({ Name = "ArchBeam", Size = Vector3.new(2.5, 2.5, width + 9), Position = Vector3.new(x, 15, 0),
-			Color = Color3.fromRGB(150, 30, 30), Material = Enum.Material.Wood, Parent = folder })
-		surfaceText(beam, Enum.NormalId.Left, "🐉", Color3.fromRGB(255, 220, 120))
-		surfaceText(beam, Enum.NormalId.Right, "🐉", Color3.fromRGB(255, 220, 120))
+	-- calçada cinza clara dos dois lados do tapete
+	for _, side in ipairs({ -1, 1 }) do
+		P({ Name = "Sidewalk", Size = Vector3.new(length + 60, 0.4, 10), Position = Vector3.new((startX + endX) / 2 + 20, 0.2, side * (width / 2 + 6)),
+			Color = Color3.fromRGB(200, 200, 205), Material = Enum.Material.SmoothPlastic, Parent = folder })
 	end
 
 	-- Caverna (onde os dragões nascem)
@@ -239,7 +143,7 @@ local function buildConveyor(map: Instance)
 	cave.Name = "Cave"
 	cave.Parent = map
 	local cx = startX - 8
-	local rockColor = Color3.fromRGB(85, 75, 70)
+	local rockColor = Color3.fromRGB(150, 145, 140)
 	P({ Size = Vector3.new(26, 30, 12), Position = Vector3.new(cx - 6, 15, -19), Color = rockColor, Material = Enum.Material.Slate, Parent = cave })
 	P({ Size = Vector3.new(26, 30, 12), Position = Vector3.new(cx - 6, 15, 19), Color = rockColor, Material = Enum.Material.Slate, Parent = cave })
 	P({ Size = Vector3.new(26, 12, 50), Position = Vector3.new(cx - 6, 24, 0), Color = rockColor, Material = Enum.Material.Slate, Parent = cave })
@@ -279,15 +183,18 @@ end
 
 -- ===================== Bases =====================
 
+local BASE_RED = Color3.fromRGB(200, 40, 35)
+local BASE_RED_DARK = Color3.fromRGB(160, 28, 25)
+local TRIM = Color3.fromRGB(250, 250, 250)
+local FLOOR_COLOR = Color3.fromRGB(235, 232, 225)
+
 local function buildBase(map: Instance, index: number, baseCF: CFrame)
 	local model = Instance.new("Model")
 	model.Name = "Base" .. index
 	model:SetAttribute("Index", index)
 	model.Parent = map
 
-	local color = BASE_COLORS[index]
-	local wallColor = color:Lerp(Color3.new(0.25, 0.22, 0.2), 0.5)
-	local light = color:Lerp(Color3.new(1, 1, 1), 0.6)
+	local accent = BASE_COLORS[index]
 	local half = Layout.BaseSize / 2
 	local h = Layout.BaseWallHeight
 	local up = Layout.UpperFloorY
@@ -295,54 +202,49 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 	local function at(x, y, z)
 		return baseCF * CFrame.new(x, y, z)
 	end
+	local function box(name, size, cf, color, extra)
+		local props = { Name = name, Size = size, CFrame = cf, Color = color, Material = Enum.Material.SmoothPlastic, Parent = model }
+		for k, v in pairs(extra or {}) do
+			props[k] = v
+		end
+		return P(props)
+	end
 
-	-- térreo
-	local floor = P({ Name = "Floor", Size = Vector3.new(Layout.BaseSize, 1, Layout.BaseSize), CFrame = at(0, 0.5, 0),
-		Color = light, Material = Enum.Material.WoodPlanks, Parent = model })
+	-- piso do térreo
+	local floor = box("Floor", Vector3.new(Layout.BaseSize, 1, Layout.BaseSize), at(0, 0.5, 0), FLOOR_COLOR)
 	floor:SetAttribute("BaseIndex", index)
-	P({ Name = "Aisle", Size = Vector3.new(16, 0.1, Layout.BaseSize - 4), CFrame = at(0, FLOOR_TOP + 0.05, 0), Color = color,
-		Material = Enum.Material.Fabric, CanCollide = false, Parent = model })
-	-- faixas de luz nas bordas do piso
+	box("Aisle", Vector3.new(14, 0.1, Layout.BaseSize - 6), at(0, FLOOR_TOP + 0.05, 0), BASE_RED, { CanCollide = false })
+
+	-- paredes vermelhas (fundo e laterais, altura dos 2 andares)
+	local wallT = 2
+	local totalH = up + 1 + 9
+	box("Wall", Vector3.new(Layout.BaseSize, totalH, wallT), at(0, FLOOR_TOP + totalH / 2, -half + wallT / 2), BASE_RED)
 	for _, side in ipairs({ -1, 1 }) do
-		P({ Name = "Trim", Size = Vector3.new(0.4, 0.2, Layout.BaseSize - 4), CFrame = at(side * (half - 2.4), FLOOR_TOP + 0.1, 0),
-			Color = color, Material = Enum.Material.Neon, CanCollide = false, Parent = model })
+		box("Wall", Vector3.new(wallT, totalH, Layout.BaseSize), at(side * (half - wallT / 2), FLOOR_TOP + totalH / 2, 0), BASE_RED)
+		local segW = half - Layout.EntranceWidth / 2
+		if segW > 0.5 then
+			box("Wall", Vector3.new(segW, h, wallT), at(side * (Layout.EntranceWidth / 2 + segW / 2), FLOOR_TOP + h / 2, half - wallT / 2), BASE_RED)
+		end
 	end
 
-	-- paredes (térreo + 2º andar)
-	local wallT = 2
-	local totalH = h + 1 + 8
-	P({ Name = "Wall", Size = Vector3.new(Layout.BaseSize, totalH, wallT), CFrame = at(0, FLOOR_TOP + totalH / 2, -half + wallT / 2), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
-	for _, side in ipairs({ -1, 1 }) do
-		P({ Name = "Wall", Size = Vector3.new(wallT, totalH, Layout.BaseSize), CFrame = at(side * (half - wallT / 2), FLOOR_TOP + totalH / 2, 0), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
-		local segW = half - Layout.EntranceWidth / 2
-		P({ Name = "Wall", Size = Vector3.new(segW, h, wallT), CFrame = at(side * (Layout.EntranceWidth / 2 + segW / 2), FLOOR_TOP + h / 2, half - wallT / 2), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
-	end
-	-- ameias no topo
-	for x = -half + 3, half - 3, 6 do
-		P({ Name = "Merlon", Size = Vector3.new(3, 2, wallT), CFrame = at(x, FLOOR_TOP + totalH + 1, -half + wallT / 2), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
-	end
-	for z = -half + 3, half - 3, 6 do
+	-- faixas brancas horizontais (base, meio e topo) por fora
+	for _, y in ipairs({ FLOOR_TOP + 0.75, FLOOR_TOP + up, FLOOR_TOP + totalH - 0.6 }) do
+		box("Trim", Vector3.new(Layout.BaseSize + 0.6, 1.5, 0.6), at(0, y, -half - 0.1), TRIM)
 		for _, side in ipairs({ -1, 1 }) do
-			P({ Name = "Merlon", Size = Vector3.new(wallT, 2, 3), CFrame = at(side * (half - wallT / 2), FLOOR_TOP + totalH + 1, z), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
+			box("Trim", Vector3.new(0.6, 1.5, Layout.BaseSize + 0.6), at(side * (half + 0.1), y, 0), TRIM)
 		end
+		box("Trim", Vector3.new(Layout.BaseSize + 0.6, 1.5, 0.6), at(0, y, half + 0.1), TRIM)
 	end
-	-- torres nos cantos com telhado em camadas e bandeira
-	for _, cx in ipairs({ -1, 1 }) do
-		for _, cz in ipairs({ -1, 1 }) do
-			local tx, tz = cx * (half - 2), cz * (half - 2)
-			local towerH = totalH + 6
-			P({ Name = "Tower", Shape = Enum.PartType.Cylinder, Size = Vector3.new(towerH, 7, 7), CFrame = at(tx, FLOOR_TOP + towerH / 2, tz) * CFrame.Angles(0, 0, math.pi / 2),
-				Color = wallColor:Lerp(Color3.new(0, 0, 0), 0.15), Material = Enum.Material.Brick, Parent = model })
-			for i = 0, 3 do
-				local w = 9 - i * 2.2
-				P({ Name = "TowerRoof", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, w, w), CFrame = at(tx, FLOOR_TOP + towerH + 0.8 + i * 1.6, tz) * CFrame.Angles(0, 0, math.pi / 2),
-					Color = color, Material = Enum.Material.SmoothPlastic, Parent = model })
-			end
-			P({ Name = "FlagPole", Size = Vector3.new(0.4, 6, 0.4), CFrame = at(tx, FLOOR_TOP + towerH + 9, tz), Color = Color3.fromRGB(60, 50, 40), Parent = model })
-			local flag = P({ Name = "Flag", Size = Vector3.new(3.4, 2.2, 0.2), CFrame = at(tx + 1.9, FLOOR_TOP + towerH + 10.8, tz), Color = color, Material = Enum.Material.Fabric, CanCollide = false, Parent = model })
-			surfaceText(flag, Enum.NormalId.Front, "🐉")
-			surfaceText(flag, Enum.NormalId.Back, "🐉")
-		end
+	-- colunas brancas nos cantos e ao lado da entrada
+	for _, x in ipairs({ -half, half, -Layout.EntranceWidth / 2 - 0.6, Layout.EntranceWidth / 2 + 0.6 }) do
+		box("Post", Vector3.new(1.4, totalH, 1.4), at(x, FLOOR_TOP + totalH / 2, half), TRIM)
+	end
+	for _, x in ipairs({ -half, half }) do
+		box("Post", Vector3.new(1.4, totalH, 1.4), at(x, FLOOR_TOP + totalH / 2, -half), TRIM)
+	end
+	-- "prateleiras" brancas na parede de fundo (detalhe da casinha)
+	for _, y in ipairs({ FLOOR_TOP + 6, FLOOR_TOP + up + 5 }) do
+		box("Shelf", Vector3.new(Layout.BaseSize - 6, 0.6, 1.2), at(0, y, -half + wallT + 0.6), TRIM)
 	end
 
 	-- 2º andar (com buraco sobre a escada)
@@ -350,56 +252,54 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 	local inner = Layout.BaseSize - 2 * wallT
 	local sideW = inner / 2 - stairsW / 2
 	for _, side in ipairs({ -1, 1 }) do
-		P({ Name = "UpperFloor", Size = Vector3.new(sideW, 1, inner), CFrame = at(side * (stairsW / 2 + sideW / 2), slabY, 0), Color = light, Material = Enum.Material.WoodPlanks, Parent = model })
+		box("UpperFloor", Vector3.new(sideW, 1, inner), at(side * (stairsW / 2 + sideW / 2), slabY, 0), FLOOR_COLOR)
 	end
 	local holeBack, holeFront = -half + wallT + 2, -2
-	P({ Name = "UpperFloor", Size = Vector3.new(stairsW, 1, 2), CFrame = at(0, slabY, holeBack - 1), Color = light, Material = Enum.Material.WoodPlanks, Parent = model })
-	P({ Name = "UpperFloor", Size = Vector3.new(stairsW, 1, half - wallT - holeFront), CFrame = at(0, slabY, (holeFront + half - wallT) / 2), Color = light, Material = Enum.Material.WoodPlanks, Parent = model })
-	P({ Name = "UpperAisle", Size = Vector3.new(4, 0.1, inner - 4), CFrame = at(-stairsW / 2 - 4, slabY + 0.55, 0), Color = color, Material = Enum.Material.Fabric, CanCollide = false, Parent = model })
-	P({ Name = "UpperAisle", Size = Vector3.new(4, 0.1, inner - 4), CFrame = at(stairsW / 2 + 4, slabY + 0.55, 0), Color = color, Material = Enum.Material.Fabric, CanCollide = false, Parent = model })
-	-- grade de vidro na frente do 2º andar e em volta do buraco da escada
+	box("UpperFloor", Vector3.new(stairsW, 1, 2), at(0, slabY, holeBack - 1), FLOOR_COLOR)
+	box("UpperFloor", Vector3.new(stairsW, 1, half - wallT - holeFront), at(0, slabY, (holeFront + half - wallT) / 2), FLOOR_COLOR)
+	-- borda branca do 2º andar na frente + vidro
 	local railH = 8
-	P({ Name = "GlassRail", Size = Vector3.new(inner, railH, 0.4), CFrame = at(0, slabY + 0.5 + railH / 2, half - wallT / 2), Color = Color3.fromRGB(180, 230, 255),
-		Material = Enum.Material.Glass, Transparency = 0.55, Parent = model })
-	P({ Name = "RailTop", Size = Vector3.new(inner, 0.4, 0.6), CFrame = at(0, slabY + 0.5 + railH, half - wallT / 2), Color = color, Material = Enum.Material.Neon, Parent = model })
+	box("FloorEdge", Vector3.new(inner, 1.2, 1), at(0, slabY, half - wallT / 2), TRIM)
+	box("GlassRail", Vector3.new(inner, railH, 0.4), at(0, slabY + 0.5 + railH / 2, half - wallT / 2), Color3.fromRGB(190, 235, 255),
+		{ Material = Enum.Material.Glass, Transparency = 0.6 })
+	box("RailTop", Vector3.new(inner, 0.6, 0.8), at(0, slabY + 0.5 + railH, half - wallT / 2), TRIM)
 	for _, side in ipairs({ -1, 1 }) do
-		P({ Name = "StairRail", Size = Vector3.new(0.3, 3, holeFront - holeBack), CFrame = at(side * (stairsW / 2 + 0.2), slabY + 2, (holeBack + holeFront) / 2), Color = Color3.fromRGB(180, 230, 255),
-			Material = Enum.Material.Glass, Transparency = 0.5, Parent = model })
+		box("StairRail", Vector3.new(0.3, 3, holeFront - holeBack), at(side * (stairsW / 2 + 0.2), slabY + 2, (holeBack + holeFront) / 2), Color3.fromRGB(190, 235, 255),
+			{ Material = Enum.Material.Glass, Transparency = 0.5 })
 	end
-	-- pilares segurando o 2º andar
+	-- teto
+	box("Roof", Vector3.new(Layout.BaseSize + 1, 1, Layout.BaseSize + 1), at(0, FLOOR_TOP + totalH + 0.5, 0), BASE_RED_DARK)
+	box("RoofTrim", Vector3.new(Layout.BaseSize + 2, 0.8, Layout.BaseSize + 2), at(0, FLOOR_TOP + totalH + 1.3, 0), TRIM)
+	-- pilares
 	for _, x in ipairs({ -stairsW / 2 - 1, stairsW / 2 + 1 }) do
 		for _, z in ipairs({ 6, 20 }) do
-			P({ Name = "Pillar", Shape = Enum.PartType.Cylinder, Size = Vector3.new(up - 1, 1.6, 1.6), CFrame = at(x, FLOOR_TOP + (up - 1) / 2, z) * CFrame.Angles(0, 0, math.pi / 2),
-				Color = Color3.fromRGB(235, 230, 220), Material = Enum.Material.Marble, Parent = model })
+			box("Pillar", Vector3.new(1.4, up - 1, 1.4), at(x, FLOOR_TOP + (up - 1) / 2, z), TRIM)
 		end
 	end
 	-- escada (sobe para o fundo)
 	local steps = 15
-	local run = (holeFront - holeBack)
+	local run = holeFront - holeBack
 	for i = 1, steps do
 		local depth = run / steps
 		local z = holeFront - (i - 0.5) * depth
 		local topY = FLOOR_TOP + i * (up / steps)
-		P({ Name = "Step", Size = Vector3.new(stairsW, topY - FLOOR_TOP, depth), CFrame = at(0, FLOOR_TOP + (topY - FLOOR_TOP) / 2, z),
-			Color = i % 2 == 0 and light or light:Lerp(color, 0.25), Material = Enum.Material.WoodPlanks, Parent = model })
+		box("Step", Vector3.new(stairsW, topY - FLOOR_TOP, depth), at(0, FLOOR_TOP + (topY - FLOOR_TOP) / 2, z), i % 2 == 0 and TRIM or FLOOR_COLOR)
 	end
 
 	-- barreira de laser na entrada
-	local barrier = P({ Name = "Barrier", Size = Vector3.new(Layout.EntranceWidth, h, 0.6), CFrame = at(0, FLOOR_TOP + h / 2, half - 1),
-		Color = Color3.fromRGB(255, 40, 40), Material = Enum.Material.ForceField, Transparency = 1, CanCollide = false, Parent = model })
+	local barrier = box("Barrier", Vector3.new(Layout.EntranceWidth, h, 0.6), at(0, FLOOR_TOP + h / 2, half - 1), Color3.fromRGB(255, 40, 40),
+		{ Material = Enum.Material.ForceField, Transparency = 1, CanCollide = false })
 	barrier.CastShadow = false
 	for _, side in ipairs({ -1, 1 }) do
-		P({ Name = "LaserPost", Size = Vector3.new(1.2, h, 1.2), CFrame = at(side * (Layout.EntranceWidth / 2 + 0.6), FLOOR_TOP + h / 2, half - 1),
-			Color = Color3.fromRGB(40, 40, 50), Material = Enum.Material.Metal, Parent = model })
-		P({ Name = "LaserLight", Size = Vector3.new(0.4, h - 1, 0.4), CFrame = at(side * (Layout.EntranceWidth / 2 + 0.6), FLOOR_TOP + h / 2, half - 0.3),
-			Color = Color3.fromRGB(255, 60, 60), Material = Enum.Material.Neon, CanCollide = false, Parent = model })
+		box("LaserLight", Vector3.new(0.5, h - 1, 0.5), at(side * (Layout.EntranceWidth / 2 - 0.3), FLOOR_TOP + h / 2, half - 0.3), Color3.fromRGB(255, 60, 60),
+			{ Material = Enum.Material.Neon, CanCollide = false })
 	end
 
 	-- botão de trancar
 	local lock = P({ Name = "LockButton", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.6, 6, 6), CFrame = at(Layout.LockButton.X, FLOOR_TOP + 0.3, Layout.LockButton.Z) * CFrame.Angles(0, 0, math.pi / 2),
 		Color = Color3.fromRGB(60, 220, 90), Material = Enum.Material.Neon, Parent = model })
 	P({ Name = "LockRing", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, 7.4, 7.4), CFrame = at(Layout.LockButton.X, FLOOR_TOP + 0.2, Layout.LockButton.Z) * CFrame.Angles(0, 0, math.pi / 2),
-		Color = Color3.fromRGB(40, 40, 50), Material = Enum.Material.Metal, Parent = model })
+		Color = TRIM, Material = Enum.Material.SmoothPlastic, Parent = model })
 	local lockGui = Instance.new("BillboardGui")
 	lockGui.Name = "LockGui"
 	lockGui.Size = UDim2.fromOffset(220, 60)
@@ -408,19 +308,21 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 	lockGui.Parent = lock
 	label(lockGui, "🔓 PISE PARA TRANCAR", { Name = "Text" })
 
-	-- placa com o nome do dono
-	local sign = P({ Name = "Sign", Size = Vector3.new(Layout.EntranceWidth + 10, 5, 1), CFrame = at(0, FLOOR_TOP + h + 3, half + 0.6),
-		Color = Color3.fromRGB(45, 30, 25), Material = Enum.Material.Wood, Parent = model })
-	P({ Name = "SignFrame", Size = Vector3.new(Layout.EntranceWidth + 11, 6, 0.6), CFrame = at(0, FLOOR_TOP + h + 3, half + 0.2), Color = color, Material = Enum.Material.Neon, Parent = model })
+	-- placa com o nome do dono em cima do telhado, virada para a esteira
+	local signY = FLOOR_TOP + totalH + 5.5
+	box("SignFrame", Vector3.new(Layout.BaseSize - 6, 8, 0.8), at(0, signY, half - 2), TRIM)
+	local sign = box("Sign", Vector3.new(Layout.BaseSize - 8, 6, 0.6), at(0, signY, half - 1.5), BASE_RED)
 	local _, signFront = surfaceText(sign, Enum.NormalId.Back, "BASE LIVRE")
 	signFront.Name = "OwnerText"
 	local _, signBack = surfaceText(sign, Enum.NormalId.Front, "BASE LIVRE")
 	signBack.Name = "OwnerText"
+	-- faixa colorida do jogador acima da entrada
+	box("Accent", Vector3.new(Layout.EntranceWidth + 2, 1.2, 0.8), at(0, FLOOR_TOP + h - 0.2, half + 0.3), accent, { Material = Enum.Material.Neon })
 
 	local statusGui = Instance.new("BillboardGui")
 	statusGui.Name = "StatusGui"
 	statusGui.Size = UDim2.fromOffset(260, 50)
-	statusGui.StudsOffsetWorldSpace = Vector3.new(0, 5, 0)
+	statusGui.StudsOffsetWorldSpace = Vector3.new(0, 6, 0)
 	statusGui.MaxDistance = 200
 	statusGui.Parent = sign
 	label(statusGui, "", { Name = "Text", TextColor3 = Color3.fromRGB(255, 90, 90) })
@@ -436,11 +338,9 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 		slot.Parent = slots
 		local y = FLOOR_TOP + pos.Y
 		local pedestal = P({ Name = "Pedestal", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.2, 7.5, 7.5),
-			CFrame = at(pos.X, y + 0.6, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = Color3.fromRGB(240, 238, 245), Material = Enum.Material.Marble, Parent = slot })
+			CFrame = at(pos.X, y + 0.6, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = TRIM, Material = Enum.Material.SmoothPlastic, Parent = slot })
 		P({ Name = "PedestalBase", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.5, 8.6, 8.6),
-			CFrame = at(pos.X, y + 0.25, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = wallColor, Material = Enum.Material.SmoothPlastic, Parent = slot })
-		P({ Name = "PedestalRing", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, 7.8, 7.8),
-			CFrame = at(pos.X, y + 1.15, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = color, Material = Enum.Material.Neon, CanCollide = false, Parent = slot })
+			CFrame = at(pos.X, y + 0.25, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = BASE_RED, Material = Enum.Material.SmoothPlastic, Parent = slot })
 		slot.PrimaryPart = pedestal
 		local towardAisle = pos.X < 0 and 1 or -1
 		local collect = P({ Name = "Collect", Size = Vector3.new(2.6, 0.3, 4.4), CFrame = at(pos.X + towardAisle * 6.2, y + 0.15, pos.Z),
@@ -454,7 +354,7 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 
 		local info = Instance.new("BillboardGui")
 		info.Name = "Info"
-		info.Size = UDim2.fromOffset(220, 90)
+		info.Size = UDim2.fromOffset(240, 100)
 		info.StudsOffsetWorldSpace = Vector3.new(0, 3, 0)
 		info.MaxDistance = 70
 		info.Enabled = false
@@ -470,7 +370,7 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 		local stroke = Instance.new("UIStroke")
 		stroke.Name = "Stroke"
 		stroke.Thickness = 2
-		stroke.Color = color
+		stroke.Color = accent
 		stroke.Parent = frame
 		local pad = Instance.new("UIPadding")
 		pad.PaddingTop = UDim.new(0, 3)
@@ -480,11 +380,11 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 		layout.SortOrder = Enum.SortOrder.LayoutOrder
 		layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
 		layout.Parent = frame
-		label(frame, "", { Name = "Mutation", LayoutOrder = 1, Size = UDim2.new(1, 0, 0.2, 0) })
-		label(frame, "", { Name = "DragonName", LayoutOrder = 2, Size = UDim2.new(1, 0, 0.25, 0) })
-		label(frame, "", { Name = "Rarity", LayoutOrder = 3, Size = UDim2.new(1, 0, 0.2, 0) })
-		label(frame, "", { Name = "Income", LayoutOrder = 4, Size = UDim2.new(1, 0, 0.17, 0), TextColor3 = Color3.fromRGB(120, 255, 120) })
-		label(frame, "", { Name = "Stored", LayoutOrder = 5, Size = UDim2.new(1, 0, 0.18, 0), TextColor3 = Color3.fromRGB(255, 230, 90) })
+		label(frame, "", { Name = "Mutation", LayoutOrder = 1, Size = UDim2.new(1, 0, 0.18, 0) })
+		label(frame, "", { Name = "DragonName", LayoutOrder = 2, Size = UDim2.new(1, 0, 0.24, 0) })
+		label(frame, "", { Name = "Rarity", LayoutOrder = 3, Size = UDim2.new(1, 0, 0.18, 0) })
+		label(frame, "", { Name = "Income", LayoutOrder = 4, Size = UDim2.new(1, 0, 0.22, 0), TextColor3 = Color3.fromRGB(255, 240, 60) })
+		label(frame, "", { Name = "Stored", LayoutOrder = 5, Size = UDim2.new(1, 0, 0.16, 0), TextColor3 = Color3.fromRGB(140, 255, 140) })
 	end
 
 	-- ponto de nascimento do dono
@@ -492,13 +392,13 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 		Transparency = 1, CanCollide = false, Neutral = true, Duration = 0, Parent = model })
 	spawn.CanTouch = false
 
-	-- luzes
+	-- luzes internas
 	for _, y in ipairs({ FLOOR_TOP + up - 2, FLOOR_TOP + up + 7 }) do
-		local bulb = P({ Name = "BaseLight", Size = Vector3.new(1, 1, 1), CFrame = at(0, y, 0), Transparency = 1, CanCollide = false, Parent = model })
+		local bulb = box("BaseLight", Vector3.new(1, 1, 1), at(0, y, 0), TRIM, { Transparency = 1, CanCollide = false })
 		local pl = Instance.new("PointLight")
 		pl.Range = 45
-		pl.Brightness = 0.9
-		pl.Color = color:Lerp(Color3.new(1, 1, 1), 0.5)
+		pl.Brightness = 0.8
+		pl.Color = Color3.fromRGB(255, 245, 230)
 		pl.Parent = bulb
 	end
 
@@ -615,12 +515,12 @@ local function setupLighting()
 	Lighting.EnvironmentSpecularScale = 0.6
 
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere") or Instance.new("Atmosphere")
-	atmosphere.Density = 0.3
-	atmosphere.Offset = 0.2
+	atmosphere.Density = 0.22
+	atmosphere.Offset = 0.1
 	atmosphere.Color = Color3.fromRGB(255, 220, 200)
 	atmosphere.Decay = Color3.fromRGB(150, 100, 120)
 	atmosphere.Glare = 0.3
-	atmosphere.Haze = 1.5
+	atmosphere.Haze = 0.6
 	atmosphere.Parent = Lighting
 
 	if not Lighting:FindFirstChildOfClass("Sky") then
@@ -629,7 +529,7 @@ local function setupLighting()
 	end
 
 	local bloom = Lighting:FindFirstChildOfClass("BloomEffect") or Instance.new("BloomEffect")
-	bloom.Intensity = 0.6
+	bloom.Intensity = 0.35
 	bloom.Size = 30
 	bloom.Threshold = 1.6
 	bloom.Parent = Lighting
@@ -667,13 +567,7 @@ function MapService:Init()
 	env.Parent = map
 
 	-- chão de terreno (grama, rios, montanhas)
-	buildTerrain()
-	P({ Name = "Path", Size = Vector3.new(420, 0.1, 40), Position = Vector3.new(10, 0.05, 0), Color = Color3.fromRGB(170, 160, 145), Material = Enum.Material.Cobblestone, Parent = env })
-	for _, z in ipairs({ -1, 1 }) do
-		for x = -170, 170, 40 do
-			buildLamp(env, Vector3.new(x, 0, z * 22))
-		end
-	end
+	buildTerrain(env)
 
 	buildConveyor(map)
 
@@ -692,15 +586,12 @@ function MapService:Init()
 		local x = rng:NextNumber(-330, 380)
 		local z = rng:NextNumber(-215, 215)
 		local insidePlay = math.abs(z) < 112 and x > -215 and x < 275
-		local inRiver = math.abs(math.abs(z) - 142) < 20
-		if not insidePlay and not inRiver then
+		if not insidePlay then
 			local roll = rng:NextNumber()
-			if roll < 0.45 then
+			if roll < 0.75 then
 				buildTree(env, Vector3.new(x, 0, z), rng:NextNumber(0.9, 1.6))
-			elseif roll < 0.8 then
-				buildPine(env, Vector3.new(x, 0, z), rng:NextNumber(0.9, 1.5))
 			else
-				buildRock(env, Vector3.new(x, 0, z), rng:NextNumber(3, 8))
+				buildFlowers(env, Vector3.new(x, 0, z), 5, 8)
 			end
 		end
 	end
@@ -717,8 +608,6 @@ function MapService:Init()
 		end
 	end
 
-	-- vulcão ao fundo
-	buildVolcano(env, Vector3.new(-40, 0, -420))
 
 	-- paredes invisíveis (limite do mapa)
 	local limits = Instance.new("Folder")
