@@ -34,6 +34,8 @@ function HudController:Init(App)
 		Parent = gui,
 	})
 	UI.gradient(Color3.fromRGB(90, 220, 100), Color3.fromRGB(30, 130, 50)).Parent = cashFrame
+	UI.label({ Text = "💰", Size = UDim2.fromOffset(52, 52), Position = UDim2.new(0, -18, 0.5, -26), MaxText = 44, Parent = cashFrame })
+	UI.shine(cashFrame)
 	self.CashLabel = UI.label({ Text = "$0", Size = UDim2.new(1, -10, 0.65, 0), Position = UDim2.fromOffset(5, 2), MaxText = 40, Parent = cashFrame })
 	self.IncomeLabel = UI.label({ Text = "+$0/s", Size = UDim2.new(1, -10, 0.32, 0), Position = UDim2.new(0, 5, 0.64, 0), MaxText = 20,
 		TextColor3 = Color3.fromRGB(230, 255, 200), Parent = cashFrame })
@@ -74,6 +76,9 @@ function HudController:Init(App)
 		local badge = UI.frame({ Name = "Badge", Size = UDim2.fromOffset(24, 24), Position = UDim2.new(1, -18, 0, -8), BackgroundColor3 = UI.Colors.Red, Visible = false, Radius = 12, Parent = b })
 		UI.label({ Text = "!", Size = UDim2.fromScale(1, 1), Parent = badge })
 		self.MenuButtons[item.Panel] = b
+		if item.Panel == "Robux" or item.Panel == "Rewards" then
+			UI.shine(b)
+		end
 	end
 	self.AdminButton = UI.button({ Text = "", Color = UI.Colors.Red, LayoutOrder = 99, Parent = menu }, function()
 		App.Controllers.PanelController:Open("Admin")

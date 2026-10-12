@@ -2,6 +2,7 @@
 -- O dragão olha para -Z (LookVector), com os pés em Y = 0.
 
 local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Dragons = require(script.Parent.Dragons)
 local Rarities = require(script.Parent.Rarities)
@@ -61,6 +62,172 @@ local function addParticles(parent: Instance, color: Color3, props)
 	return e
 end
 
+-- ===================== Modelos importados do Blender =====================
+-- Se existir ReplicatedStorage.DragonModels com os modelos importados
+-- (Dragon_Basic, Dragon_Chunky, Dragon_Serpent, Dragon_Spiky, Dragon_Hydra),
+-- eles são usados no lugar dos dragões feitos de peças.
+
+local STYLE_TEMPLATE = {
+	Basic = "Basic",
+	Chunky = "Chunky",
+	Serpent = "Serpent",
+	Spiky = "Spiky",
+	Hydra = "Hydra",
+	Crystal = "Spiky",
+	Skeleton = "Basic",
+}
+
+local ROLE_BY_NAME = { "Belly", "Wings", "Horns", "Pupils", "Eyes", "Body" }
+local prepared = {} -- [estilo] = { Model, Height } (protótipo normalizado)
+
+local function roleOf(name: string): string?
+	local lower = string.lower(name)
+	for _, role in ipairs(ROLE_BY_NAME) do
+		if string.find(lower, string.lower(role), 1, true) then
+			return role
+		end
+	end
+	return nil
+end
+
+local function findTemplate(style: string)
+	local folder = ReplicatedStorage:FindFirstChild("DragonModels")
+	if not folder then
+		return nil
+	end
+	local key = STYLE_TEMPLATE[style] or "Basic"
+	return folder:FindFirstChild("Dragon_" .. key) or folder:FindFirstChild(key) or folder:FindFirstChild("Dragon_Basic")
+end
+
+-- Prepara o modelo importado uma vez: raiz nos pés, olhando para -Z, altura 1
+local function prepareTemplate(style: string)
+	local key = STYLE_TEMPLATE[style] or "Basic"
+	if prepared[key] ~= nil then
+		return prepared[key] or nil
+	end
+	local template = findTemplate(style)
+	if not template then
+		prepared[key] = false
+		return nil
+	end
+	local model = template:Clone()
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("Humanoid") or d:IsA("AnimationController") or d:IsA("SurfaceAppearance") then
+			d:Destroy()
+		end
+	end
+	local meshes = {}
+	local bones = {}
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("BasePart") then
+			table.insert(meshes, d)
+		elseif d:IsA("Bone") then
+			bones[d.Name] = d
+		end
+	end
+	if #meshes == 0 then
+		prepared[key] = false
+		return nil
+	end
+	-- direção para frente: da cauda para a cabeça
+	local headBone = bones.Head or bones.Neck2
+	local tailBone = bones.Tail1 or bones.Spine
+	local forward = Vector3.new(0, 0, -1)
+	if headBone and tailBone then
+		local d = (headBone.WorldPosition - tailBone.WorldPosition) * Vector3.new(1, 0, 1)
+		if d.Magnitude > 0.01 then
+			forward = d.Unit
+		end
+	end
+	local bboxCF, size = model:GetBoundingBox()
+	local feet = Vector3.new(bboxCF.Position.X, bboxCF.Position.Y - size.Y / 2, bboxCF.Position.Z)
+	local root = Instance.new("Part")
+	root.Name = "Root"
+	root.Size = Vector3.new(1, 1, 1)
+	root.Transparency = 1
+	root.CFrame = CFrame.lookAt(feet, feet + forward)
+	root.Parent = model
+	model.PrimaryPart = root
+	model:PivotTo(CFrame.new())
+	model:ScaleTo(1 / math.max(size.Y, 0.01))
+	prepared[key] = { Model = model }
+	return prepared[key]
+end
+
+-- Monta as partes a partir do modelo importado
+local function buildFromTemplate(model: Model, info, def, height: number, material: Enum.Material, add)
+	local proto = info.Model:Clone()
+	proto:ScaleTo(proto:GetScale() * height)
+	local root = proto.PrimaryPart
+	local hornColor = def.Horn or def.Belly:Lerp(Color3.new(1, 1, 1), 0.4)
+	local body, eyesPart
+	local tailBone, tailIndex = nil, -1
+	for _, d in ipairs(proto:GetDescendants()) do
+		if d:IsA("Bone") then
+			local n = tonumber(string.match(d.Name, "^Tail(%d+)$"))
+			if n and n > tailIndex then
+				tailBone, tailIndex = d, n
+			end
+		end
+	end
+	for _, d in ipairs(proto:GetChildren()) do
+		d.Parent = model
+	end
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("BasePart") and d ~= root then
+			local role = roleOf(d.Name)
+			if role then
+				d:SetAttribute("Role", role == "Wings" and "Wing" or role)
+				if d:IsA("MeshPart") then
+					d.TextureID = ""
+				end
+			end
+			if role == "Body" then
+				d.Color = def.Body
+				d.Material = material
+				body = body or d
+			elseif role == "Belly" then
+				d.Color = def.Belly
+				d.Material = material
+			elseif role == "Wings" then
+				d.Color = def.Wing
+				d.Material = material == Enum.Material.Neon and Enum.Material.SmoothPlastic or material
+			elseif role == "Horns" then
+				d.Color = hornColor
+				d.Material = Enum.Material.SmoothPlastic
+			elseif role == "Eyes" then
+				d.Color = def.Eye
+				d.Material = Enum.Material.Neon
+				eyesPart = d
+			elseif role == "Pupils" then
+				d.Color = Color3.fromRGB(15, 15, 20)
+				d.Material = Enum.Material.SmoothPlastic
+			end
+			add(d)
+		end
+	end
+	root.Parent = model
+	add(root)
+	body = body or root
+	-- âncoras invisíveis para efeitos (coroa, auréola, fogo)
+	local function anchorPart(name: string, cf: CFrame)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = Vector3.new(0.2, 0.2, 0.2)
+		p.Transparency = 1
+		p.CFrame = cf
+		add(p)
+		return p
+	end
+	local up = root.CFrame.UpVector
+	local fwd = root.CFrame.LookVector
+	local headPos = eyesPart and (eyesPart.Position - fwd * 0.06 * height + up * 0.03 * height) or (root.Position + up * height * 0.75 + fwd * height * 0.35)
+	local head = anchorPart("Head", root.CFrame.Rotation + headPos)
+	local tipPos = tailBone and tailBone.WorldPosition or (root.Position - fwd * height * 0.9 + up * height * 0.2)
+	local tip = anchorPart("TailTip", root.CFrame.Rotation + tipPos)
+	return root, body, head, tip
+end
+
 --[[
 	Build(dragonId, mutationId, options)
 	options.Scale     multiplicador extra de tamanho
@@ -99,8 +266,15 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 		return CFrame.new(x * s, y * s, z * s)
 	end
 
+	local root, body, head, tip
+	local height = 6 * s
+	local bodyHeight = 2.3 * s
+	local templateInfo = not options.Procedural and prepareTemplate(style)
+	if templateInfo then
+		root, body, head, tip = buildFromTemplate(model, templateInfo, def, height, material, add)
+	else
 	-- Raiz invisível (pivô do modelo)
-	local root = block(Vector3.new(1, 1, 1), CFrame.new(), Color3.new(1, 1, 1), "Root")
+	root = block(Vector3.new(1, 1, 1), CFrame.new(), Color3.new(1, 1, 1), "Root")
 	root.Name = "Root"
 	root.Transparency = 1
 	add(root)
@@ -125,7 +299,7 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 	end
 
 	local bodyY = (legLen + 0.9)
-	local body = add(ellipsoid(bodySize, C(0, bodyY, 0), bodyColor, "Body", material))
+	body = add(ellipsoid(bodySize, C(0, bodyY, 0), bodyColor, "Body", material))
 	body.Name = "Body"
 	if style == "Skeleton" then
 		body.Transparency = 0.35
@@ -150,9 +324,9 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 		local neckCF = base * C(0, 1.1 * neckLen, -1.4) * CFrame.Angles(-0.55, 0, 0)
 		add(ellipsoid(V(1.25, 2.0 * neckLen, 1.25), neckCF, bodyColor, "Body", material))
 		local headCF = base * C(0, 2.2 * neckLen, -2.1 - 0.3 * neckLen)
-		local head = add(ellipsoid(V(1.9, 1.6, 2.0), headCF, bodyColor, "Body", material))
-		head.Name = "Head"
-		table.insert(headParts, head)
+		local headPart = add(ellipsoid(V(1.9, 1.6, 2.0), headCF, bodyColor, "Body", material))
+		headPart.Name = "Head"
+		table.insert(headParts, headPart)
 		add(ellipsoid(V(1.35, 1.0, 1.5), headCF * C(0, -0.25, -0.95), bodyColor, "Body", material))
 		add(ellipsoid(V(1.15, 0.45, 1.3), headCF * C(0, -0.6, -0.8), bellyColor, "Belly", material))
 		-- olhos
@@ -196,7 +370,7 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 		add(ellipsoid(V(tailSize, tailSize * 0.9, segLen), lastCF, bodyColor, "Body", material))
 		tailSize *= 0.8
 	end
-	local tip = add(block(V(0.2, 1.1, 1.1), lastCF * C(0, 0.1, 0.8) * CFrame.Angles(math.rad(45), 0, 0), hornColor, "Horn"))
+	tip = add(block(V(0.2, 1.1, 1.1), lastCF * C(0, 0.1, 0.8) * CFrame.Angles(math.rad(45), 0, 0), hornColor, "Horn"))
 	tip.Name = "TailTip"
 
 	-- Espinhos nas costas
@@ -243,13 +417,16 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 		table.insert(wingWelds, weld)
 	end
 
+	head = headParts[1]
+	height = (bodyY + 2.2 * neckLen + 1.5) * s
+	bodyHeight = bodyY * s
+	end
+
 	-- Efeitos
 	local effects = {}
 	for _, e in ipairs(def.Effects or {}) do
 		effects[e] = true
 	end
-	local head = headParts[1]
-
 	if effects.Crown then
 		local crownCF = head.CFrame * C(0, 0.95, 0.1)
 		add(block(V(1.1, 0.35, 1.1), crownCF, Color3.fromRGB(255, 205, 40), "Crown", Enum.Material.Metal))
@@ -386,16 +563,16 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 
 	local promptAttachment = Instance.new("Attachment")
 	promptAttachment.Name = "PromptAttachment"
-	promptAttachment.Position = Vector3.new(0, bodyY * s + 1.5 * s, 0)
+	promptAttachment.Position = Vector3.new(0, bodyHeight + 1.5 * s, 0)
 	promptAttachment.Parent = root
 
 	local topAttachment = Instance.new("Attachment")
 	topAttachment.Name = "TopAttachment"
-	topAttachment.Position = Vector3.new(0, (bodyY + 2.2 * neckLen + 2.2) * s, 0)
+	topAttachment.Position = Vector3.new(0, height + 0.7 * s, 0)
 	topAttachment.Parent = root
 
 	model.PrimaryPart = root
-	model:SetAttribute("Height", (bodyY + 2.2 * neckLen + 1.5) * s)
+	model:SetAttribute("Height", height)
 	CollectionService:AddTag(model, "Dragon")
 	return model
 end

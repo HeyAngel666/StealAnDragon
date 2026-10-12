@@ -6,6 +6,8 @@ local UI = require(script.Parent.UI)
 
 local NotifyController = {}
 
+local KIND_ICONS = { info = "💬", success = "✅", error = "❌", warning = "⚠️", rare = "✨" }
+
 local KIND_COLORS = {
 	info = Color3.fromRGB(70, 130, 230),
 	success = Color3.fromRGB(60, 190, 90),
@@ -39,7 +41,8 @@ function NotifyController:Init(App)
 		ZIndex = 20,
 		Parent = App.Gui,
 	})
-	self.AlertLabel:FindFirstChildOfClass("UIStroke").Thickness = 3
+	self.AlertLabel:FindFirstChildOfClass("UIStroke").Thickness = 4
+	self.AlertGradient = UI.new("UIGradient", { Rotation = 90, Parent = self.AlertLabel })
 end
 
 function NotifyController:Toast(text: string, kind: string?)
@@ -51,10 +54,13 @@ function NotifyController:Toast(text: string, kind: string?)
 		LayoutOrder = -math.floor(os.clock() * 100),
 		Parent = self.Toasts,
 	})
+	UI.gradient(color:Lerp(Color3.new(1, 1, 1), 0.15), color:Lerp(Color3.new(0, 0, 0), 0.2)).Parent = frame
+	UI.label({ Text = KIND_ICONS[kind or "info"] or "💬", Size = UDim2.fromOffset(32, 32), Position = UDim2.fromOffset(6, 6), MaxText = 26, Parent = frame })
 	UI.label({
 		Text = text,
-		Size = UDim2.new(1, -16, 1, -8),
-		Position = UDim2.fromOffset(8, 4),
+		Size = UDim2.new(1, -50, 1, -8),
+		Position = UDim2.fromOffset(42, 4),
+		TextXAlignment = Enum.TextXAlignment.Left,
 		MaxText = 20,
 		TextWrapped = true,
 		Parent = frame,
@@ -93,7 +99,9 @@ function NotifyController:Alert(text: string, color: Color3?)
 	local token = alertToken
 	local l = self.AlertLabel
 	l.Text = text
-	l.TextColor3 = color or Color3.new(1, 1, 1)
+	local base = color or Color3.new(1, 1, 1)
+	l.TextColor3 = Color3.new(1, 1, 1)
+	self.AlertGradient.Color = ColorSequence.new(base:Lerp(Color3.new(1, 1, 1), 0.5), base)
 	l.TextTransparency = 0
 	l.Visible = true
 	UI.pop(l)

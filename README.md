@@ -78,6 +78,21 @@ Os preços são sugestões. A loja do jogo busca o preço real direto do Roblox,
 - **Painel Admin** (só o dono vê): iniciar eventos, meteoros, congelar, abrir bases, soltar qualquer dragão, dar dragão a todos, avisos. Use para fazer "admin abuse" ao vivo.
 - **Salvamento automático** com proteção contra perda de dados.
 
+## 🐉 Dragões 3D (Blender)
+Os dragões 3D com ossos estão em `assets/models/` (5 estilos: Basic, Chunky, Serpent, Spiky, Hydra).
+O jogo pinta cada dragão com as cores dele e anima asas, cauda e cabeça por código.
+Sem os modelos importados, o jogo usa os dragões antigos feitos de peças (nada quebra).
+
+**Como importar (uma vez só):**
+1. No Studio: **Avatar** (ou **Home**) > **Importar 3D** e escolha `Dragon_Basic.fbx`.
+2. Na janela do importador, deixe tudo padrão e clique em **Importar**. O modelo aparece no Workspace.
+3. No Explorador, arraste o modelo para **ReplicatedStorage > DragonModels**.
+4. Confirme que o nome é exatamente **Dragon_Basic**.
+5. Repita para `Dragon_Chunky`, `Dragon_Serpent`, `Dragon_Spiky` e `Dragon_Hydra`.
+6. **Play** para testar e **Publish**.
+
+Para gerar de novo: `python tools/blender/make_dragons.py` (precisa do Blender ou do módulo `bpy`).
+
 ## 🎮 Controle (console)
 - **Y / Triângulo**: abre o menu lateral (navegue com o direcional, **A** para abrir).
 - **B / Bola**: fecha a janela.

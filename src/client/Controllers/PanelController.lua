@@ -35,6 +35,7 @@ function PanelController:Init(App)
 			Parent = App.Gui,
 		})
 		UI.gradient(UI.Colors.PanelLight, UI.Colors.Panel).Parent = frame
+		UI.shadow(frame)
 		local header = UI.frame({
 			Name = "Header",
 			Size = UDim2.new(1, 0, 0, 56),

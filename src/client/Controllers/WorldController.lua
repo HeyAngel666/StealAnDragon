@@ -47,13 +47,33 @@ end
 
 local animated = {} -- [model] = { welds = {{weld, base, side}}, phase, rainbowParts, glitch }
 
+-- eixo do modelo convertido para o espaço do osso (funciona com qualquer orientação do FBX)
+local function boneAxis(bone: Bone, root: BasePart, modelAxis: Vector3): Vector3
+	local world = root.CFrame:VectorToWorldSpace(modelAxis)
+	return bone.WorldCFrame:VectorToObjectSpace(world).Unit
+end
+
 local function registerDragon(model: Instance)
 	if not model:IsA("Model") then
 		return
 	end
-	local info = { Welds = {}, Phase = math.random() * math.pi * 2, Colored = {} }
+	local info = { Welds = {}, Bones = {}, Phase = math.random() * math.pi * 2, Colored = {} }
+	local root = (model :: Model).PrimaryPart
 	for _, d in ipairs(model:GetDescendants()) do
-		if d:IsA("Weld") and d.Name == "WingJoint" then
+		if d:IsA("Bone") and root then
+			local name = d.Name
+			local side = root.CFrame:PointToObjectSpace(d.WorldPosition).X >= 0 and 1 or -1
+			local tailIndex = tonumber(string.match(name, "^Tail(%d+)$"))
+			if string.match(name, "^Wing[LR]1$") then
+				table.insert(info.Bones, { Bone = d, Kind = "Wing1", Side = side, Axis = boneAxis(d, root, Vector3.new(0, 0, -1)) })
+			elseif string.match(name, "^Wing[LR]2$") then
+				table.insert(info.Bones, { Bone = d, Kind = "Wing2", Side = side, Axis = boneAxis(d, root, Vector3.new(0, 0, -1)) })
+			elseif tailIndex then
+				table.insert(info.Bones, { Bone = d, Kind = "Tail", Index = tailIndex, Axis = boneAxis(d, root, Vector3.new(0, 1, 0)) })
+			elseif string.match(name, "^Neck1") or string.match(name, "^Head") then
+				table.insert(info.Bones, { Bone = d, Kind = "Neck", Axis = boneAxis(d, root, Vector3.new(1, 0, 0)) })
+			end
+		elseif d:IsA("Weld") and d.Name == "WingJoint" then
 			table.insert(info.Welds, { Weld = d, Base = d.C0, Side = d:GetAttribute("Side") or 1 })
 		elseif d:IsA("BasePart") then
 			local role = d:GetAttribute("Role")
@@ -234,6 +254,14 @@ function WorldController:Start(App)
 		end
 	end)
 
+	-- gradientes de raridade que giram (Lendário+)
+	RunService.RenderStepped:Connect(function()
+		local rot = (os.clock() * 90) % 360
+		for _, g in ipairs(CollectionService:GetTagged("SpinGradient")) do
+			g.Rotation = rot
+		end
+	end)
+
 	-- animação (30x por segundo)
 	local acc = 0
 	RunService.RenderStepped:Connect(function(dt)
@@ -254,6 +282,20 @@ function WorldController:Start(App)
 					local flap = math.sin(t * 5 + info.Phase) * 0.45
 					for _, w in ipairs(info.Welds) do
 						w.Weld.C0 = w.Base * CFrame.Angles(0, 0, w.Side * flap)
+					end
+					-- modelos 3D importados: anima os ossos
+					for _, b in ipairs(info.Bones) do
+						local angle
+						if b.Kind == "Wing1" then
+							angle = b.Side * flap
+						elseif b.Kind == "Wing2" then
+							angle = b.Side * math.sin(t * 5 + info.Phase - 0.7) * 0.3
+						elseif b.Kind == "Tail" then
+							angle = math.sin(t * 2.2 + info.Phase - b.Index * 0.6) * 0.15
+						else
+							angle = math.sin(t * 1.6 + info.Phase) * 0.06
+						end
+						b.Bone.Transform = CFrame.fromAxisAngle(b.Axis, angle)
 					end
 					if info.Rainbow then
 						local color = Color3.fromHSV((t * 0.25 + info.Phase) % 1, 0.8, 1)

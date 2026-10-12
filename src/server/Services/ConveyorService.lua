@@ -12,6 +12,7 @@ local Rarities = require(Shared.Rarities)
 local Mutations = require(Shared.Mutations)
 local Format = require(Shared.Format)
 local DragonBuilder = require(Shared.DragonBuilder)
+local RarityStyle = require(Shared.RarityStyle)
 
 local ConveyorService = {}
 local active = {} -- lista de { Model, Id, Mut, Price, Distance, Bought }
@@ -68,9 +69,22 @@ function ConveyorService:Spawn(forcedId: string?, forcedMutation: string?)
 	gui.StudsOffsetWorldSpace = Vector3.new(0, (model:GetAttribute("Height") or 5) + 2, 0)
 	gui.MaxDistance = 90
 	gui.Parent = model.Root
+	local back = Instance.new("Frame")
+	back.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+	back.BackgroundTransparency = 0.35
+	back.Size = UDim2.fromScale(1, 1)
+	back.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = back
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2
+	stroke.Color = rarity.Color
+	stroke.Parent = back
 	local list = Instance.new("UIListLayout")
 	list.SortOrder = Enum.SortOrder.LayoutOrder
-	list.Parent = gui
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.Parent = back
 	local function line(text, color, order, height)
 		local t = Instance.new("TextLabel")
 		t.BackgroundTransparency = 1
@@ -81,14 +95,14 @@ function ConveyorService:Spawn(forcedId: string?, forcedMutation: string?)
 		t.TextColor3 = color
 		t.Text = text
 		t.LayoutOrder = order
-		t.Parent = gui
+		t.Parent = back
 		return t
 	end
 	if mutation.Id ~= "Normal" then
 		line(mutation.Name, mutation.Color, 0, 0.22)
 	end
 	line(def.Name, Color3.new(1, 1, 1), 1, 0.28)
-	line(rarity.Name, rarity.Color, 2, 0.22)
+	RarityStyle.Apply(line(rarity.Name, rarity.Color, 2, 0.22), rarity.Id)
 	line(Format.Cash(price) .. "  •  " .. Format.Cash(def.Income * mutation.Multiplier) .. "/s", Color3.fromRGB(120, 255, 120), 3, 0.24)
 
 	model.Parent = folder

@@ -25,15 +25,200 @@
       <float name="RespawnTime">3</float>
     </Properties>
   </Item>
-  <Item class="ReplicatedStorage" referent="2">
+  <Item class="ReplicatedFirst" referent="2">
+    <Properties>
+      <string name="Name">ReplicatedFirst</string>
+    </Properties>
+    <Item class="LocalScript" referent="3">
+      <Properties>
+        <string name="Name">Loading</string>
+        <string name="Source"><![CDATA[-- Tela de carregamento (aparece antes de tudo).
+
+local ContentProvider = game:GetService("ContentProvider")
+local Players = game:GetService("Players")
+local ReplicatedFirst = game:GetService("ReplicatedFirst")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+
+ReplicatedFirst:RemoveDefaultLoadingScreen()
+
+local player = Players.LocalPlayer
+local gui = Instance.new("ScreenGui")
+gui.Name = "LoadingScreen"
+gui.IgnoreGuiInset = true
+gui.DisplayOrder = 100
+gui.ResetOnSpawn = false
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local function new(className, props)
+	local inst = Instance.new(className)
+	for k, v in pairs(props) do
+		if k ~= "Parent" then
+			inst[k] = v
+		end
+	end
+	inst.Parent = props.Parent
+	return inst
+end
+
+local bg = new("Frame", { Size = UDim2.fromScale(1, 1), BackgroundColor3 = Color3.new(1, 1, 1), BorderSizePixel = 0, Parent = gui })
+local bgGradient = new("UIGradient", {
+	Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(60, 20, 110)),
+		ColorSequenceKeypoint.new(0.6, Color3.fromRGB(190, 50, 60)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 160, 40)),
+	}),
+	Rotation = 60,
+	Parent = bg,
+})
+
+local dragon = new("TextLabel", {
+	Text = "🐉",
+	TextScaled = true,
+	BackgroundTransparency = 1,
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.32),
+	Size = UDim2.fromScale(0.22, 0.22),
+	Parent = bg,
+})
+new("UIAspectRatioConstraint", { Parent = dragon })
+
+local title = new("TextLabel", {
+	Text = "STEAL A DRAGON",
+	Font = Enum.Font.FredokaOne,
+	TextScaled = true,
+	TextColor3 = Color3.new(1, 1, 1),
+	BackgroundTransparency = 1,
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.52),
+	Size = UDim2.fromScale(0.8, 0.12),
+	Parent = bg,
+})
+new("UIStroke", { Thickness = 5, Color = Color3.fromRGB(40, 10, 20), Parent = title })
+new("UIGradient", {
+	Color = ColorSequence.new(Color3.fromRGB(255, 250, 170), Color3.fromRGB(255, 170, 30)),
+	Rotation = 90,
+	Parent = title,
+})
+
+local subtitle = new("TextLabel", {
+	Text = "Compre • Roube • Proteja",
+	Font = Enum.Font.FredokaOne,
+	TextScaled = true,
+	TextColor3 = Color3.new(1, 1, 1),
+	BackgroundTransparency = 1,
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.62),
+	Size = UDim2.fromScale(0.6, 0.05),
+	Parent = bg,
+})
+new("UIStroke", { Thickness = 3, Color = Color3.fromRGB(40, 10, 20), Parent = subtitle })
+
+local barBack = new("Frame", {
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.75),
+	Size = UDim2.fromScale(0.5, 0.035),
+	BackgroundColor3 = Color3.fromRGB(30, 15, 40),
+	BorderSizePixel = 0,
+	Parent = bg,
+})
+new("UICorner", { CornerRadius = UDim.new(1, 0), Parent = barBack })
+new("UIStroke", { Thickness = 3, Color = Color3.fromRGB(20, 5, 15), Parent = barBack })
+local bar = new("Frame", { Size = UDim2.fromScale(0.05, 1), BackgroundColor3 = Color3.fromRGB(110, 230, 90), BorderSizePixel = 0, Parent = barBack })
+new("UICorner", { CornerRadius = UDim.new(1, 0), Parent = bar })
+
+local TIPS = {
+	"Dica: tranque sua base pisando no botão verde da entrada!",
+	"Dica: dragões raros rendem muito mais dinheiro por segundo.",
+	"Dica: um tapa faz o ladrão soltar o seu dragão!",
+	"Dica: eventos a cada 9 minutos trazem dragões de Ouro e Lava.",
+	"Dica: complete o Índice para ganhar bônus de renda.",
+	"Dica: jogue com amigos e ganhe +10% de dinheiro por amigo!",
+}
+local tip = new("TextLabel", {
+	Text = TIPS[math.random(1, #TIPS)],
+	Font = Enum.Font.FredokaOne,
+	TextScaled = true,
+	TextColor3 = Color3.fromRGB(255, 240, 220),
+	BackgroundTransparency = 1,
+	AnchorPoint = Vector2.new(0.5, 0.5),
+	Position = UDim2.fromScale(0.5, 0.82),
+	Size = UDim2.fromScale(0.7, 0.04),
+	Parent = bg,
+})
+new("UIStroke", { Thickness = 2, Color = Color3.fromRGB(40, 10, 20), Parent = tip })
+
+-- animação
+local t0 = os.clock()
+local conn = RunService.RenderStepped:Connect(function()
+	local t = os.clock() - t0
+	dragon.Position = UDim2.fromScale(0.5, 0.32 + math.sin(t * 2.5) * 0.015)
+	dragon.Rotation = math.sin(t * 1.5) * 8
+	bgGradient.Rotation = 60 + math.sin(t * 0.5) * 20
+end)
+
+task.spawn(function()
+	while gui.Parent do
+		task.wait(3.5)
+		tip.Text = TIPS[math.random(1, #TIPS)]
+	end
+end)
+
+-- espera o jogo carregar (no máximo ~15s)
+local progress = 0.05
+local function setProgress(p)
+	progress = math.max(progress, p)
+	TweenService:Create(bar, TweenInfo.new(0.3), { Size = UDim2.fromScale(progress, 1) }):Play()
+end
+
+if not game:IsLoaded() then
+	game.Loaded:Wait()
+end
+setProgress(0.4)
+local start = os.clock()
+while os.clock() - start < 15 do
+	local mainGui = player.PlayerGui:FindFirstChild("MainGui")
+	local queue = ContentProvider.RequestQueueSize
+	setProgress(0.4 + 0.5 * (1 - math.clamp(queue / 50, 0, 1)) * math.clamp((os.clock() - start) / 3, 0, 1))
+	if mainGui and player.Character and queue < 10 and os.clock() - start > 1.5 then
+		break
+	end
+	task.wait(0.2)
+end
+setProgress(1)
+task.wait(0.4)
+
+-- some aos poucos
+for _, d in ipairs(gui:GetDescendants()) do
+	if d:IsA("TextLabel") then
+		TweenService:Create(d, TweenInfo.new(0.6), { TextTransparency = 1 }):Play()
+	elseif d:IsA("UIStroke") then
+		TweenService:Create(d, TweenInfo.new(0.6), { Transparency = 1 }):Play()
+	elseif d:IsA("Frame") then
+		TweenService:Create(d, TweenInfo.new(0.6), { BackgroundTransparency = 1 }):Play()
+	end
+end
+task.wait(0.7)
+conn:Disconnect()
+gui:Destroy()
+]]></string>
+      </Properties>
+    </Item>
+  </Item>
+  <Item class="ReplicatedStorage" referent="4">
     <Properties>
       <string name="Name">ReplicatedStorage</string>
     </Properties>
-    <Item class="Folder" referent="3">
+    <Item class="Folder" referent="5">
+      <Properties>
+        <string name="Name">DragonModels</string>
+      </Properties>
+    </Item>
+    <Item class="Folder" referent="6">
       <Properties>
         <string name="Name">Shared</string>
       </Properties>
-      <Item class="ModuleScript" referent="4">
+      <Item class="ModuleScript" referent="7">
         <Properties>
           <string name="Name">Config</string>
           <string name="Source"><![CDATA[-- Configurações gerais do jogo "Roube um Dragão".
@@ -118,13 +303,14 @@ return Config
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="5">
+      <Item class="ModuleScript" referent="8">
         <Properties>
           <string name="Name">DragonBuilder</string>
           <string name="Source"><![CDATA[-- Monta os modelos 3D dos dragões usando peças (sem precisar de malhas externas).
 -- O dragão olha para -Z (LookVector), com os pés em Y = 0.
 
 local CollectionService = game:GetService("CollectionService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local Dragons = require(script.Parent.Dragons)
 local Rarities = require(script.Parent.Rarities)
@@ -184,6 +370,172 @@ local function addParticles(parent: Instance, color: Color3, props)
 	return e
 end
 
+-- ===================== Modelos importados do Blender =====================
+-- Se existir ReplicatedStorage.DragonModels com os modelos importados
+-- (Dragon_Basic, Dragon_Chunky, Dragon_Serpent, Dragon_Spiky, Dragon_Hydra),
+-- eles são usados no lugar dos dragões feitos de peças.
+
+local STYLE_TEMPLATE = {
+	Basic = "Basic",
+	Chunky = "Chunky",
+	Serpent = "Serpent",
+	Spiky = "Spiky",
+	Hydra = "Hydra",
+	Crystal = "Spiky",
+	Skeleton = "Basic",
+}
+
+local ROLE_BY_NAME = { "Belly", "Wings", "Horns", "Pupils", "Eyes", "Body" }
+local prepared = {} -- [estilo] = { Model, Height } (protótipo normalizado)
+
+local function roleOf(name: string): string?
+	local lower = string.lower(name)
+	for _, role in ipairs(ROLE_BY_NAME) do
+		if string.find(lower, string.lower(role), 1, true) then
+			return role
+		end
+	end
+	return nil
+end
+
+local function findTemplate(style: string)
+	local folder = ReplicatedStorage:FindFirstChild("DragonModels")
+	if not folder then
+		return nil
+	end
+	local key = STYLE_TEMPLATE[style] or "Basic"
+	return folder:FindFirstChild("Dragon_" .. key) or folder:FindFirstChild(key) or folder:FindFirstChild("Dragon_Basic")
+end
+
+-- Prepara o modelo importado uma vez: raiz nos pés, olhando para -Z, altura 1
+local function prepareTemplate(style: string)
+	local key = STYLE_TEMPLATE[style] or "Basic"
+	if prepared[key] ~= nil then
+		return prepared[key] or nil
+	end
+	local template = findTemplate(style)
+	if not template then
+		prepared[key] = false
+		return nil
+	end
+	local model = template:Clone()
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("Script") or d:IsA("LocalScript") or d:IsA("Humanoid") or d:IsA("AnimationController") or d:IsA("SurfaceAppearance") then
+			d:Destroy()
+		end
+	end
+	local meshes = {}
+	local bones = {}
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("BasePart") then
+			table.insert(meshes, d)
+		elseif d:IsA("Bone") then
+			bones[d.Name] = d
+		end
+	end
+	if #meshes == 0 then
+		prepared[key] = false
+		return nil
+	end
+	-- direção para frente: da cauda para a cabeça
+	local headBone = bones.Head or bones.Neck2
+	local tailBone = bones.Tail1 or bones.Spine
+	local forward = Vector3.new(0, 0, -1)
+	if headBone and tailBone then
+		local d = (headBone.WorldPosition - tailBone.WorldPosition) * Vector3.new(1, 0, 1)
+		if d.Magnitude > 0.01 then
+			forward = d.Unit
+		end
+	end
+	local bboxCF, size = model:GetBoundingBox()
+	local feet = Vector3.new(bboxCF.Position.X, bboxCF.Position.Y - size.Y / 2, bboxCF.Position.Z)
+	local root = Instance.new("Part")
+	root.Name = "Root"
+	root.Size = Vector3.new(1, 1, 1)
+	root.Transparency = 1
+	root.CFrame = CFrame.lookAt(feet, feet + forward)
+	root.Parent = model
+	model.PrimaryPart = root
+	model:PivotTo(CFrame.new())
+	model:ScaleTo(1 / math.max(size.Y, 0.01))
+	prepared[key] = { Model = model }
+	return prepared[key]
+end
+
+-- Monta as partes a partir do modelo importado
+local function buildFromTemplate(model: Model, info, def, height: number, material: Enum.Material, add)
+	local proto = info.Model:Clone()
+	proto:ScaleTo(proto:GetScale() * height)
+	local root = proto.PrimaryPart
+	local hornColor = def.Horn or def.Belly:Lerp(Color3.new(1, 1, 1), 0.4)
+	local body, eyesPart
+	local tailBone, tailIndex = nil, -1
+	for _, d in ipairs(proto:GetDescendants()) do
+		if d:IsA("Bone") then
+			local n = tonumber(string.match(d.Name, "^Tail(%d+)$"))
+			if n and n > tailIndex then
+				tailBone, tailIndex = d, n
+			end
+		end
+	end
+	for _, d in ipairs(proto:GetChildren()) do
+		d.Parent = model
+	end
+	for _, d in ipairs(model:GetDescendants()) do
+		if d:IsA("BasePart") and d ~= root then
+			local role = roleOf(d.Name)
+			if role then
+				d:SetAttribute("Role", role == "Wings" and "Wing" or role)
+				if d:IsA("MeshPart") then
+					d.TextureID = ""
+				end
+			end
+			if role == "Body" then
+				d.Color = def.Body
+				d.Material = material
+				body = body or d
+			elseif role == "Belly" then
+				d.Color = def.Belly
+				d.Material = material
+			elseif role == "Wings" then
+				d.Color = def.Wing
+				d.Material = material == Enum.Material.Neon and Enum.Material.SmoothPlastic or material
+			elseif role == "Horns" then
+				d.Color = hornColor
+				d.Material = Enum.Material.SmoothPlastic
+			elseif role == "Eyes" then
+				d.Color = def.Eye
+				d.Material = Enum.Material.Neon
+				eyesPart = d
+			elseif role == "Pupils" then
+				d.Color = Color3.fromRGB(15, 15, 20)
+				d.Material = Enum.Material.SmoothPlastic
+			end
+			add(d)
+		end
+	end
+	root.Parent = model
+	add(root)
+	body = body or root
+	-- âncoras invisíveis para efeitos (coroa, auréola, fogo)
+	local function anchorPart(name: string, cf: CFrame)
+		local p = Instance.new("Part")
+		p.Name = name
+		p.Size = Vector3.new(0.2, 0.2, 0.2)
+		p.Transparency = 1
+		p.CFrame = cf
+		add(p)
+		return p
+	end
+	local up = root.CFrame.UpVector
+	local fwd = root.CFrame.LookVector
+	local headPos = eyesPart and (eyesPart.Position - fwd * 0.06 * height + up * 0.03 * height) or (root.Position + up * height * 0.75 + fwd * height * 0.35)
+	local head = anchorPart("Head", root.CFrame.Rotation + headPos)
+	local tipPos = tailBone and tailBone.WorldPosition or (root.Position - fwd * height * 0.9 + up * height * 0.2)
+	local tip = anchorPart("TailTip", root.CFrame.Rotation + tipPos)
+	return root, body, head, tip
+end
+
 --[[
 	Build(dragonId, mutationId, options)
 	options.Scale     multiplicador extra de tamanho
@@ -222,8 +574,15 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 		return CFrame.new(x * s, y * s, z * s)
 	end
 
+	local root, body, head, tip
+	local height = 6 * s
+	local bodyHeight = 2.3 * s
+	local templateInfo = not options.Procedural and prepareTemplate(style)
+	if templateInfo then
+		root, body, head, tip = buildFromTemplate(model, templateInfo, def, height, material, add)
+	else
 	-- Raiz invisível (pivô do modelo)
-	local root = block(Vector3.new(1, 1, 1), CFrame.new(), Color3.new(1, 1, 1), "Root")
+	root = block(Vector3.new(1, 1, 1), CFrame.new(), Color3.new(1, 1, 1), "Root")
 	root.Name = "Root"
 	root.Transparency = 1
 	add(root)
@@ -248,7 +607,7 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 	end
 
 	local bodyY = (legLen + 0.9)
-	local body = add(ellipsoid(bodySize, C(0, bodyY, 0), bodyColor, "Body", material))
+	body = add(ellipsoid(bodySize, C(0, bodyY, 0), bodyColor, "Body", material))
 	body.Name = "Body"
 	if style == "Skeleton" then
 		body.Transparency = 0.35
@@ -273,9 +632,9 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 		local neckCF = base * C(0, 1.1 * neckLen, -1.4) * CFrame.Angles(-0.55, 0, 0)
 		add(ellipsoid(V(1.25, 2.0 * neckLen, 1.25), neckCF, bodyColor, "Body", material))
 		local headCF = base * C(0, 2.2 * neckLen, -2.1 - 0.3 * neckLen)
-		local head = add(ellipsoid(V(1.9, 1.6, 2.0), headCF, bodyColor, "Body", material))
-		head.Name = "Head"
-		table.insert(headParts, head)
+		local headPart = add(ellipsoid(V(1.9, 1.6, 2.0), headCF, bodyColor, "Body", material))
+		headPart.Name = "Head"
+		table.insert(headParts, headPart)
 		add(ellipsoid(V(1.35, 1.0, 1.5), headCF * C(0, -0.25, -0.95), bodyColor, "Body", material))
 		add(ellipsoid(V(1.15, 0.45, 1.3), headCF * C(0, -0.6, -0.8), bellyColor, "Belly", material))
 		-- olhos
@@ -319,7 +678,7 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 		add(ellipsoid(V(tailSize, tailSize * 0.9, segLen), lastCF, bodyColor, "Body", material))
 		tailSize *= 0.8
 	end
-	local tip = add(block(V(0.2, 1.1, 1.1), lastCF * C(0, 0.1, 0.8) * CFrame.Angles(math.rad(45), 0, 0), hornColor, "Horn"))
+	tip = add(block(V(0.2, 1.1, 1.1), lastCF * C(0, 0.1, 0.8) * CFrame.Angles(math.rad(45), 0, 0), hornColor, "Horn"))
 	tip.Name = "TailTip"
 
 	-- Espinhos nas costas
@@ -366,13 +725,16 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 		table.insert(wingWelds, weld)
 	end
 
+	head = headParts[1]
+	height = (bodyY + 2.2 * neckLen + 1.5) * s
+	bodyHeight = bodyY * s
+	end
+
 	-- Efeitos
 	local effects = {}
 	for _, e in ipairs(def.Effects or {}) do
 		effects[e] = true
 	end
-	local head = headParts[1]
-
 	if effects.Crown then
 		local crownCF = head.CFrame * C(0, 0.95, 0.1)
 		add(block(V(1.1, 0.35, 1.1), crownCF, Color3.fromRGB(255, 205, 40), "Crown", Enum.Material.Metal))
@@ -509,16 +871,16 @@ function DragonBuilder.Build(dragonId: string, mutationId: string?, options)
 
 	local promptAttachment = Instance.new("Attachment")
 	promptAttachment.Name = "PromptAttachment"
-	promptAttachment.Position = Vector3.new(0, bodyY * s + 1.5 * s, 0)
+	promptAttachment.Position = Vector3.new(0, bodyHeight + 1.5 * s, 0)
 	promptAttachment.Parent = root
 
 	local topAttachment = Instance.new("Attachment")
 	topAttachment.Name = "TopAttachment"
-	topAttachment.Position = Vector3.new(0, (bodyY + 2.2 * neckLen + 2.2) * s, 0)
+	topAttachment.Position = Vector3.new(0, height + 0.7 * s, 0)
 	topAttachment.Parent = root
 
 	model.PrimaryPart = root
-	model:SetAttribute("Height", (bodyY + 2.2 * neckLen + 1.5) * s)
+	model:SetAttribute("Height", height)
 	CollectionService:AddTag(model, "Dragon")
 	return model
 end
@@ -527,7 +889,7 @@ return DragonBuilder
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="6">
+      <Item class="ModuleScript" referent="9">
         <Properties>
           <string name="Name">Dragons</string>
           <string name="Source"><![CDATA[-- Catálogo de dragões.
@@ -676,7 +1038,7 @@ return Dragons
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="7">
+      <Item class="ModuleScript" referent="10">
         <Properties>
           <string name="Name">Format</string>
           <string name="Source"><![CDATA[-- Formatação de números ($1.2K, $3.4M...) e tempo.
@@ -731,7 +1093,7 @@ return Format
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="8">
+      <Item class="ModuleScript" referent="11">
         <Properties>
           <string name="Name">Gear</string>
           <string name="Source"><![CDATA[-- Equipamentos (ferramentas).
@@ -781,7 +1143,7 @@ return Gear
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="9">
+      <Item class="ModuleScript" referent="12">
         <Properties>
           <string name="Name">Layout</string>
           <string name="Source"><![CDATA[-- Posições do mapa usadas pelo servidor e pelo cliente.
@@ -795,7 +1157,7 @@ Layout.ConveyorEnd = Vector3.new(185, 1, 0)
 Layout.ConveyorWidth = 12
 
 Layout.BaseSize = 64
-Layout.BaseWallHeight = 18
+Layout.BaseWallHeight = 15
 Layout.EntranceWidth = 18
 
 Layout.PlazaCenter = Vector3.new(225, 0, 0)
@@ -812,19 +1174,25 @@ for _, x in ipairs(BASE_X) do
 	table.insert(Layout.Bases, CFrame.new(x, 0, BASE_Z) * CFrame.Angles(0, math.pi, 0))
 end
 
+-- Bases de 2 andares: térreo + andar de cima (escada no meio, ao fundo)
+Layout.UpperFloorY = 15 -- altura do piso do 2º andar (acima do piso do térreo)
+Layout.StairsWidth = 8
+
 -- Slots dentro da base (coordenadas locais; +Z = lado da entrada)
--- 4 colunas x 5 linhas = 20 slots
-local COLUMNS = { -24, -11, 11, 24 }
-local ROWS = { -24, -14, -4, 6, 16 }
+-- 10 no térreo (2 colunas x 5) + 10 no andar de cima
+local COLUMNS = { -22, 22 }
+local ROWS = { -22, -11, 0, 11, 22 }
 Layout.Slots = {}
-for _, z in ipairs(ROWS) do
-	for _, x in ipairs(COLUMNS) do
-		table.insert(Layout.Slots, Vector3.new(x, 0, z))
+for _, floorY in ipairs({ 0, Layout.UpperFloorY }) do
+	for _, z in ipairs(ROWS) do
+		for _, x in ipairs(COLUMNS) do
+			table.insert(Layout.Slots, Vector3.new(x, floorY, z))
+		end
 	end
 end
 
-Layout.LockButton = Vector3.new(0, 0, 22)
-Layout.SpawnPoint = Vector3.new(0, 0, -6)
+Layout.LockButton = Vector3.new(0, 0, 24)
+Layout.SpawnPoint = Vector3.new(0, 0, 12)
 
 -- Verifica se uma posição do mundo está dentro de uma base.
 function Layout.IsInsideBase(baseCFrame: CFrame, position: Vector3): boolean
@@ -837,7 +1205,7 @@ return Layout
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="10">
+      <Item class="ModuleScript" referent="13">
         <Properties>
           <string name="Name">Monetization</string>
           <string name="Source"><![CDATA[-- ===================================================================
@@ -925,7 +1293,7 @@ return Monetization
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="11">
+      <Item class="ModuleScript" referent="14">
         <Properties>
           <string name="Name">Mutations</string>
           <string name="Source"><![CDATA[-- Mutações: versões especiais dos dragões que rendem mais dinheiro.
@@ -982,7 +1350,7 @@ return Mutations
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="12">
+      <Item class="ModuleScript" referent="15">
         <Properties>
           <string name="Name">Rarities</string>
           <string name="Source"><![CDATA[-- Raridades dos dragões, em ordem da mais comum para a mais rara.
@@ -1015,7 +1383,63 @@ return Rarities
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="13">
+      <Item class="ModuleScript" referent="16">
+        <Properties>
+          <string name="Name">RarityStyle</string>
+          <string name="Source"><![CDATA[-- Cores em degradê para os textos de raridade (placas e interface).
+-- Gradientes marcados com a tag "SpinGradient" giram no cliente (Divino/Secreto).
+
+local CollectionService = game:GetService("CollectionService")
+
+local RarityStyle = {}
+
+local function seq(...)
+	local colors = { ... }
+	local points = {}
+	for i, c in ipairs(colors) do
+		table.insert(points, ColorSequenceKeypoint.new((i - 1) / (#colors - 1), c))
+	end
+	return ColorSequence.new(points)
+end
+
+local rgb = Color3.fromRGB
+
+RarityStyle.Gradients = {
+	Comum = seq(rgb(255, 255, 255), rgb(180, 180, 190)),
+	Incomum = seq(rgb(170, 255, 140), rgb(50, 200, 80)),
+	Raro = seq(rgb(140, 220, 255), rgb(40, 110, 255)),
+	Epico = seq(rgb(240, 150, 255), rgb(140, 50, 255)),
+	Lendario = seq(rgb(255, 250, 150), rgb(255, 170, 20), rgb(255, 250, 150)),
+	Mitico = seq(rgb(255, 140, 170), rgb(255, 30, 70), rgb(255, 140, 170)),
+	Divino = seq(rgb(255, 255, 255), rgb(255, 230, 120), rgb(255, 255, 255), rgb(255, 230, 120)),
+	Secreto = seq(rgb(255, 60, 60), rgb(255, 200, 40), rgb(60, 255, 120), rgb(60, 160, 255), rgb(200, 60, 255), rgb(255, 60, 60)),
+}
+
+RarityStyle.Spin = { Lendario = true, Mitico = true, Divino = true, Secreto = true }
+
+-- Aplica o degradê da raridade num TextLabel
+function RarityStyle.Apply(label: TextLabel, rarityId: string)
+	local old = label:FindFirstChild("RarityGradient")
+	if old then
+		old:Destroy()
+	end
+	local gradient = Instance.new("UIGradient")
+	gradient.Name = "RarityGradient"
+	gradient.Color = RarityStyle.Gradients[rarityId] or RarityStyle.Gradients.Comum
+	gradient.Rotation = 90
+	gradient.Parent = label
+	label.TextColor3 = Color3.new(1, 1, 1)
+	if RarityStyle.Spin[rarityId] then
+		CollectionService:AddTag(gradient, "SpinGradient")
+	end
+	return gradient
+end
+
+return RarityStyle
+]]></string>
+        </Properties>
+      </Item>
+      <Item class="ModuleScript" referent="17">
         <Properties>
           <string name="Name">Rebirths</string>
           <string name="Source"><![CDATA[-- Rebirths: zera dinheiro e dragões em troca de bônus permanentes.
@@ -1052,7 +1476,7 @@ return Rebirths
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="14">
+      <Item class="ModuleScript" referent="18">
         <Properties>
           <string name="Name">Remotes</string>
           <string name="Source"><![CDATA[-- Cria (servidor) ou encontra (cliente) os RemoteEvents usados no jogo.
@@ -1097,7 +1521,7 @@ return Remotes
 ]]></string>
         </Properties>
       </Item>
-      <Item class="ModuleScript" referent="15">
+      <Item class="ModuleScript" referent="19">
         <Properties>
           <string name="Name">Sounds</string>
           <string name="Source"><![CDATA[-- ===================================================================
@@ -1132,15 +1556,15 @@ return Sounds
       </Item>
     </Item>
   </Item>
-  <Item class="ServerScriptService" referent="16">
+  <Item class="ServerScriptService" referent="20">
     <Properties>
       <string name="Name">ServerScriptService</string>
     </Properties>
-    <Item class="Folder" referent="17">
+    <Item class="Folder" referent="21">
       <Properties>
         <string name="Name">Server</string>
       </Properties>
-      <Item class="Script" referent="18">
+      <Item class="Script" referent="22">
         <Properties>
           <string name="Name">Main</string>
           <token name="RunContext">0</token>
@@ -1195,11 +1619,11 @@ print("[Roube um Dragão] Servidor iniciado!")
 ]]></string>
         </Properties>
       </Item>
-      <Item class="Folder" referent="19">
+      <Item class="Folder" referent="23">
         <Properties>
           <string name="Name">Services</string>
         </Properties>
-        <Item class="ModuleScript" referent="20">
+        <Item class="ModuleScript" referent="24">
           <Properties>
             <string name="Name">ActionService</string>
             <string name="Source"><![CDATA[-- Recebe os pedidos do cliente (com limite anti-spam) e envia mensagens/efeitos.
@@ -1346,7 +1770,7 @@ return ActionService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="21">
+        <Item class="ModuleScript" referent="25">
           <Properties>
             <string name="Name">AdminService</string>
             <string name="Source"><![CDATA[-- Comandos de admin (painel "Admin" na interface). Use para fazer eventos
@@ -1453,7 +1877,7 @@ return AdminService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="22">
+        <Item class="ModuleScript" referent="26">
           <Properties>
             <string name="Name">BaseService</string>
             <string name="Source"><![CDATA[-- Bases dos jogadores: dono, espaços, trava (laser), escudo e placas.
@@ -1760,7 +2184,7 @@ return BaseService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="23">
+        <Item class="ModuleScript" referent="27">
           <Properties>
             <string name="Name">ConveyorService</string>
             <string name="Source"><![CDATA[-- Esteira central: dragões saem da caverna, andam até o portal e podem ser comprados.
@@ -1777,6 +2201,7 @@ local Rarities = require(Shared.Rarities)
 local Mutations = require(Shared.Mutations)
 local Format = require(Shared.Format)
 local DragonBuilder = require(Shared.DragonBuilder)
+local RarityStyle = require(Shared.RarityStyle)
 
 local ConveyorService = {}
 local active = {} -- lista de { Model, Id, Mut, Price, Distance, Bought }
@@ -1833,9 +2258,22 @@ function ConveyorService:Spawn(forcedId: string?, forcedMutation: string?)
 	gui.StudsOffsetWorldSpace = Vector3.new(0, (model:GetAttribute("Height") or 5) + 2, 0)
 	gui.MaxDistance = 90
 	gui.Parent = model.Root
+	local back = Instance.new("Frame")
+	back.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+	back.BackgroundTransparency = 0.35
+	back.Size = UDim2.fromScale(1, 1)
+	back.Parent = gui
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 12)
+	corner.Parent = back
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2
+	stroke.Color = rarity.Color
+	stroke.Parent = back
 	local list = Instance.new("UIListLayout")
 	list.SortOrder = Enum.SortOrder.LayoutOrder
-	list.Parent = gui
+	list.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	list.Parent = back
 	local function line(text, color, order, height)
 		local t = Instance.new("TextLabel")
 		t.BackgroundTransparency = 1
@@ -1846,14 +2284,14 @@ function ConveyorService:Spawn(forcedId: string?, forcedMutation: string?)
 		t.TextColor3 = color
 		t.Text = text
 		t.LayoutOrder = order
-		t.Parent = gui
+		t.Parent = back
 		return t
 	end
 	if mutation.Id ~= "Normal" then
 		line(mutation.Name, mutation.Color, 0, 0.22)
 	end
 	line(def.Name, Color3.new(1, 1, 1), 1, 0.28)
-	line(rarity.Name, rarity.Color, 2, 0.22)
+	RarityStyle.Apply(line(rarity.Name, rarity.Color, 2, 0.22), rarity.Id)
 	line(Format.Cash(price) .. "  •  " .. Format.Cash(def.Income * mutation.Multiplier) .. "/s", Color3.fromRGB(120, 255, 120), 3, 0.24)
 
 	model.Parent = folder
@@ -1952,7 +2390,7 @@ return ConveyorService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="24">
+        <Item class="ModuleScript" referent="28">
           <Properties>
             <string name="Name">DataService</string>
             <string name="Source"><![CDATA[-- Salva e carrega os dados dos jogadores (DataStore), com trava de sessão
@@ -2148,7 +2586,7 @@ return DataService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="25">
+        <Item class="ModuleScript" referent="29">
           <Properties>
             <string name="Name">DragonService</string>
             <string name="Source"><![CDATA[-- Dragões nas bases: colocar, render dinheiro, coletar, vender e transferir.
@@ -2165,6 +2603,7 @@ local Mutations = require(Shared.Mutations)
 local Rebirths = require(Shared.Rebirths)
 local Format = require(Shared.Format)
 local DragonBuilder = require(Shared.DragonBuilder)
+local RarityStyle = require(Shared.RarityStyle)
 
 local DragonService = {}
 local friendCache = {} -- [player] = { [userId] = bool }
@@ -2291,7 +2730,11 @@ function DragonService:UpdateInfo(base, slotIndex: number)
 	frame.Mutation.TextColor3 = mutation.Color or Color3.new(1, 1, 1)
 	frame.DragonName.Text = def.Name
 	frame.Rarity.Text = rarity.Name
-	frame.Rarity.TextColor3 = rarity.Color
+	if frame.Rarity:GetAttribute("RarityId") ~= rarity.Id then
+		frame.Rarity:SetAttribute("RarityId", rarity.Id)
+		RarityStyle.Apply(frame.Rarity, rarity.Id)
+		frame.Stroke.Color = rarity.Color
+	end
 	frame.Income.Text = Format.Cash(self:BaseIncome(entry.Record) * self:GetMultiplier(base.Owner)) .. "/s"
 	if entry.Stealing then
 		frame.Stored.Text = "⚠️ SENDO ROUBADO!"
@@ -2590,7 +3033,7 @@ return DragonService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="26">
+        <Item class="ModuleScript" referent="30">
           <Properties>
             <string name="Name">EventService</string>
             <string name="Source"><![CDATA[-- Eventos do servidor: automáticos (a cada ~9 min) e comprados com Robux
@@ -2828,7 +3271,7 @@ return EventService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="27">
+        <Item class="ModuleScript" referent="31">
           <Properties>
             <string name="Name">GearService</string>
             <string name="Source"><![CDATA[-- Equipamentos: loja (dinheiro do jogo), criação das ferramentas e seus efeitos.
@@ -3207,7 +3650,7 @@ return GearService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="28">
+        <Item class="ModuleScript" referent="32">
           <Properties>
             <string name="Name">LeaderboardService</string>
             <string name="Source"><![CDATA[-- Rankings globais (todos os servidores): mais ricos e mais roubos.
@@ -3314,7 +3757,7 @@ return LeaderboardService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="29">
+        <Item class="ModuleScript" referent="33">
           <Properties>
             <string name="Name">MapService</string>
             <string name="Source"><![CDATA[-- Constrói o mapa inteiro por código: chão, esteira, caverna, portal, 8 bases,
@@ -3388,53 +3831,109 @@ end
 
 -- ===================== Terreno e decoração =====================
 
+local Terrain = workspace.Terrain
+
 local function buildTree(parent: Instance, pos: Vector3, scale: number)
 	local trunkH = 8 * scale
-	P({ Name = "Trunk", Shape = Enum.PartType.Cylinder, Size = Vector3.new(trunkH, 1.6 * scale, 1.6 * scale),
+	P({ Name = "Trunk", Shape = Enum.PartType.Cylinder, Size = Vector3.new(trunkH, 1.8 * scale, 1.8 * scale),
 		CFrame = CFrame.new(pos + Vector3.new(0, trunkH / 2, 0)) * CFrame.Angles(0, 0, math.pi / 2),
-		Color = Color3.fromRGB(110, 75, 45), Material = Enum.Material.Wood, Parent = parent })
-	local green = Color3.fromRGB(60 + rng:NextInteger(-10, 20), 150 + rng:NextInteger(-20, 20), 60)
-	for i = 1, 3 do
-		local d = (7 - i) * scale
-		P({ Name = "Leaves", Shape = Enum.PartType.Ball, Size = Vector3.new(d, d, d),
-			Position = pos + Vector3.new(rng:NextNumber(-1, 1) * scale, trunkH + (i - 1) * 2.2 * scale, rng:NextNumber(-1, 1) * scale),
+		Color = Color3.fromRGB(120, 80, 50), Material = Enum.Material.Wood, Parent = parent })
+	local hue = rng:NextNumber(0.24, 0.33)
+	local top = pos + Vector3.new(0, trunkH, 0)
+	-- copa arredondada com várias bolas
+	local offsets = { Vector3.new(0, 1.5, 0), Vector3.new(2.2, 0, 0.6), Vector3.new(-2, 0.3, -0.8), Vector3.new(0.4, 0.2, 2.2), Vector3.new(-0.6, 0, -2.2), Vector3.new(0, 3.4, 0) }
+	for i, o in ipairs(offsets) do
+		local d = (i == #offsets and 4.5 or 6) * scale * rng:NextNumber(0.85, 1.1)
+		P({ Name = "Leaves", Shape = Enum.PartType.Ball, Size = Vector3.new(d, d, d), Position = top + o * scale,
+			Color = Color3.fromHSV(hue, 0.6, rng:NextNumber(0.55, 0.75)), Material = Enum.Material.Grass, Parent = parent })
+	end
+end
+
+local function buildPine(parent: Instance, pos: Vector3, scale: number)
+	P({ Name = "Trunk", Shape = Enum.PartType.Cylinder, Size = Vector3.new(4 * scale, 1.4 * scale, 1.4 * scale),
+		CFrame = CFrame.new(pos + Vector3.new(0, 2 * scale, 0)) * CFrame.Angles(0, 0, math.pi / 2),
+		Color = Color3.fromRGB(100, 70, 45), Material = Enum.Material.Wood, Parent = parent })
+	local green = Color3.fromRGB(40, rng:NextInteger(110, 140), 70)
+	for i = 0, 3 do
+		local w = (9 - i * 2) * scale
+		P({ Name = "PineLayer", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2.6 * scale, w, w),
+			CFrame = CFrame.new(pos + Vector3.new(0, (4 + i * 2.6) * scale, 0)) * CFrame.Angles(0, 0, math.pi / 2),
 			Color = green, Material = Enum.Material.Grass, Parent = parent })
 	end
 end
 
 local function buildRock(parent: Instance, pos: Vector3, size: number)
-	P({ Name = "Rock", Size = Vector3.new(size, size * 0.7, size * 0.9), CFrame = CFrame.new(pos + Vector3.new(0, size * 0.25, 0)) * CFrame.Angles(rng:NextNumber(-0.3, 0.3), rng:NextNumber(0, 6), rng:NextNumber(-0.3, 0.3)),
-		Color = Color3.fromRGB(120, 115, 110), Material = Enum.Material.Slate, Parent = parent })
+	for _ = 1, 3 do
+		local s = size * rng:NextNumber(0.5, 1)
+		P({ Name = "Rock", Size = Vector3.new(s, s * 0.7, s * 0.9),
+			CFrame = CFrame.new(pos + Vector3.new(rng:NextNumber(-1, 1) * size * 0.4, s * 0.25, rng:NextNumber(-1, 1) * size * 0.4))
+				* CFrame.Angles(rng:NextNumber(-0.4, 0.4), rng:NextNumber(0, 6), rng:NextNumber(-0.4, 0.4)),
+			Color = Color3.fromRGB(125, 120, 115), Material = Enum.Material.Slate, Parent = parent })
+	end
 end
 
-local function buildMountain(parent: Instance, pos: Vector3, size: Vector3, color: Color3)
-	local half = size.X / 2
-	for _, side in ipairs({ -1, 1 }) do
-		P({ ClassName = "WedgePart", Size = Vector3.new(size.Z, size.Y, half),
-			CFrame = CFrame.new(pos + Vector3.new(side * half / 2, size.Y / 2, 0)) * CFrame.Angles(0, side * math.pi / 2, 0),
-			Color = color, Material = Enum.Material.Rock, Parent = parent })
+local FLOWER_COLORS = { Color3.fromRGB(255, 90, 120), Color3.fromRGB(255, 220, 60), Color3.fromRGB(150, 110, 255), Color3.fromRGB(255, 255, 255), Color3.fromRGB(90, 180, 255) }
+
+local function buildFlowers(parent: Instance, center: Vector3, radius: number, count: number)
+	for _ = 1, count do
+		local pos = center + Vector3.new(rng:NextNumber(-radius, radius), 0, rng:NextNumber(-radius, radius))
+		P({ Name = "Stem", Size = Vector3.new(0.2, 1, 0.2), Position = pos + Vector3.new(0, 0.5, 0), Color = Color3.fromRGB(60, 150, 60), CanCollide = false, Parent = parent })
+		P({ Name = "Flower", Shape = Enum.PartType.Ball, Size = Vector3.new(0.8, 0.8, 0.8), Position = pos + Vector3.new(0, 1.1, 0),
+			Color = FLOWER_COLORS[rng:NextInteger(1, #FLOWER_COLORS)], Material = Enum.Material.SmoothPlastic, CanCollide = false, Parent = parent })
+	end
+end
+
+local function buildTerrain()
+	Terrain:Clear()
+	pcall(function()
+		Terrain.Decoration = true -- grama animada
+	end)
+	Terrain.WaterColor = Color3.fromRGB(40, 150, 200)
+	Terrain.WaterTransparency = 0.4
+	Terrain.WaterWaveSize = 0.2
+	-- chão de grama
+	Terrain:FillBlock(CFrame.new(20, -8, 0), Vector3.new(840, 16, 680), Enum.Material.Grass)
+	-- rios atrás das bases (além do limite do mapa) com areia nas margens
+	for _, z in ipairs({ -142, 142 }) do
+		Terrain:FillBlock(CFrame.new(20, -2, z), Vector3.new(840, 4, 36), Enum.Material.Sand)
+		Terrain:FillBlock(CFrame.new(20, -4, z), Vector3.new(840, 8, 24), Enum.Material.Air)
+		Terrain:FillBlock(CFrame.new(20, -5, z), Vector3.new(840, 6, 24), Enum.Material.Water)
+	end
+	-- montanhas com neve em volta
+	for i = 0, 15 do
+		local x = -360 + i * 50 + rng:NextNumber(-10, 10)
+		for _, side in ipairs({ -1, 1 }) do
+			local z = side * rng:NextNumber(230, 280)
+			local r = rng:NextNumber(45, 75)
+			Terrain:FillBall(Vector3.new(x, -10, z), r, Enum.Material.Rock)
+			Terrain:FillBall(Vector3.new(x, r * 0.55, z), r * 0.45, Enum.Material.Snow)
+			Terrain:FillBall(Vector3.new(x + rng:NextNumber(-40, 40), -14, side * rng:NextNumber(185, 205)), rng:NextNumber(20, 32), Enum.Material.Grass)
+		end
+	end
+	for _, x in ipairs({ -420, 470 }) do
+		for z = -260, 260, 70 do
+			local r = rng:NextNumber(50, 80)
+			Terrain:FillBall(Vector3.new(x, -10, z), r, Enum.Material.Rock)
+			Terrain:FillBall(Vector3.new(x, r * 0.55, z), r * 0.45, Enum.Material.Snow)
+		end
 	end
 end
 
 local function buildVolcano(parent: Instance, pos: Vector3)
-	local folder = Instance.new("Model")
-	folder.Name = "Volcano"
-	folder.Parent = parent
-	for i = 0, 5 do
-		local w = 140 - i * 22
-		P({ Size = Vector3.new(w, 18, w), CFrame = CFrame.new(pos + Vector3.new(0, 9 + i * 18, 0)) * CFrame.Angles(0, i * 0.4, 0),
-			Color = Color3.fromRGB(70 - i * 5, 55 - i * 4, 50 - i * 4), Material = Enum.Material.Basalt, Parent = folder })
-	end
-	local lava = P({ Size = Vector3.new(20, 2, 20), Position = pos + Vector3.new(0, 6 * 18 + 1, 0), Color = Color3.fromRGB(255, 90, 10),
-		Material = Enum.Material.Neon, Parent = folder })
+	Terrain:FillBall(pos + Vector3.new(0, -30, 0), 110, Enum.Material.Basalt)
+	Terrain:FillBall(pos + Vector3.new(0, 40, 0), 60, Enum.Material.Basalt)
+	Terrain:FillBall(pos + Vector3.new(0, 95, 0), 24, Enum.Material.CrackedLava)
+	local lava = P({ Name = "VolcanoLava", Shape = Enum.PartType.Cylinder, Size = Vector3.new(2, 30, 30),
+		CFrame = CFrame.new(pos + Vector3.new(0, 112, 0)) * CFrame.Angles(0, 0, math.pi / 2),
+		Color = Color3.fromRGB(255, 100, 20), Material = Enum.Material.Neon, CanCollide = false, Parent = parent })
 	local smoke = Instance.new("Smoke")
-	smoke.Size = 30
-	smoke.RiseVelocity = 12
+	smoke.Size = 40
+	smoke.RiseVelocity = 14
 	smoke.Opacity = 0.25
-	smoke.Color = Color3.fromRGB(60, 60, 60)
+	smoke.Color = Color3.fromRGB(70, 60, 60)
 	smoke.Parent = lava
 	local fire = Instance.new("Fire")
-	fire.Size = 25
+	fire.Size = 30
 	fire.Heat = 25
 	fire.Parent = lava
 	local light = Instance.new("PointLight")
@@ -3477,6 +3976,24 @@ local function buildConveyor(map: Instance)
 			CFrame = CFrame.new(x, 1.08, 0) * CFrame.Angles(0, -math.pi / 2, 0), Color = Color3.fromRGB(255, 210, 120),
 			Material = Enum.Material.Neon, Transparency = 0.3, Parent = folder })
 		arrow.CastShadow = false
+	end
+
+	-- arcos decorativos sobre a esteira
+	for x = startX + 40, endX - 30, 60 do
+		for _, side in ipairs({ -1, 1 }) do
+			P({ Name = "ArchPillar", Size = Vector3.new(2, 16, 2), Position = Vector3.new(x, 8, side * (width / 2 + 3)),
+				Color = Color3.fromRGB(70, 45, 35), Material = Enum.Material.Wood, Parent = folder })
+			local torch = P({ Name = "Torch", Shape = Enum.PartType.Ball, Size = Vector3.new(1.6, 1.6, 1.6), Position = Vector3.new(x, 16.8, side * (width / 2 + 3)),
+				Color = Color3.fromRGB(255, 160, 40), Material = Enum.Material.Neon, CanCollide = false, Parent = folder })
+			local fire = Instance.new("Fire")
+			fire.Size = 3
+			fire.Heat = 6
+			fire.Parent = torch
+		end
+		local beam = P({ Name = "ArchBeam", Size = Vector3.new(2.5, 2.5, width + 9), Position = Vector3.new(x, 15, 0),
+			Color = Color3.fromRGB(150, 30, 30), Material = Enum.Material.Wood, Parent = folder })
+		surfaceText(beam, Enum.NormalId.Left, "🐉", Color3.fromRGB(255, 220, 120))
+		surfaceText(beam, Enum.NormalId.Right, "🐉", Color3.fromRGB(255, 220, 120))
 	end
 
 	-- Caverna (onde os dragões nascem)
@@ -3531,65 +4048,141 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 	model.Parent = map
 
 	local color = BASE_COLORS[index]
-	local wallColor = color:Lerp(Color3.new(0.2, 0.2, 0.2), 0.45)
+	local wallColor = color:Lerp(Color3.new(0.25, 0.22, 0.2), 0.5)
+	local light = color:Lerp(Color3.new(1, 1, 1), 0.6)
 	local half = Layout.BaseSize / 2
 	local h = Layout.BaseWallHeight
+	local up = Layout.UpperFloorY
+	local stairsW = Layout.StairsWidth
 	local function at(x, y, z)
 		return baseCF * CFrame.new(x, y, z)
 	end
 
+	-- térreo
 	local floor = P({ Name = "Floor", Size = Vector3.new(Layout.BaseSize, 1, Layout.BaseSize), CFrame = at(0, 0.5, 0),
-		Color = color:Lerp(Color3.new(1, 1, 1), 0.55), Material = Enum.Material.WoodPlanks, Parent = model })
+		Color = light, Material = Enum.Material.WoodPlanks, Parent = model })
 	floor:SetAttribute("BaseIndex", index)
-	-- tapete do corredor central
-	P({ Name = "Aisle", Size = Vector3.new(14, 0.1, Layout.BaseSize - 4), CFrame = at(0, FLOOR_TOP + 0.05, 0), Color = color,
+	P({ Name = "Aisle", Size = Vector3.new(16, 0.1, Layout.BaseSize - 4), CFrame = at(0, FLOOR_TOP + 0.05, 0), Color = color,
 		Material = Enum.Material.Fabric, CanCollide = false, Parent = model })
-
-	-- paredes
-	local wallT = 2
-	P({ Name = "Wall", Size = Vector3.new(Layout.BaseSize, h, wallT), CFrame = at(0, FLOOR_TOP + h / 2, -half + wallT / 2), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
+	-- faixas de luz nas bordas do piso
 	for _, side in ipairs({ -1, 1 }) do
-		P({ Name = "Wall", Size = Vector3.new(wallT, h, Layout.BaseSize), CFrame = at(side * (half - wallT / 2), FLOOR_TOP + h / 2, 0), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
+		P({ Name = "Trim", Size = Vector3.new(0.4, 0.2, Layout.BaseSize - 4), CFrame = at(side * (half - 2.4), FLOOR_TOP + 0.1, 0),
+			Color = color, Material = Enum.Material.Neon, CanCollide = false, Parent = model })
+	end
+
+	-- paredes (térreo + 2º andar)
+	local wallT = 2
+	local totalH = h + 1 + 8
+	P({ Name = "Wall", Size = Vector3.new(Layout.BaseSize, totalH, wallT), CFrame = at(0, FLOOR_TOP + totalH / 2, -half + wallT / 2), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
+	for _, side in ipairs({ -1, 1 }) do
+		P({ Name = "Wall", Size = Vector3.new(wallT, totalH, Layout.BaseSize), CFrame = at(side * (half - wallT / 2), FLOOR_TOP + totalH / 2, 0), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
 		local segW = half - Layout.EntranceWidth / 2
 		P({ Name = "Wall", Size = Vector3.new(segW, h, wallT), CFrame = at(side * (Layout.EntranceWidth / 2 + segW / 2), FLOOR_TOP + h / 2, half - wallT / 2), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
-		-- torres na frente
-		P({ Name = "Tower", Size = Vector3.new(5, h + 6, 5), CFrame = at(side * (Layout.EntranceWidth / 2 + 2.5), FLOOR_TOP + (h + 6) / 2, half - 2), Color = wallColor:Lerp(Color3.new(0, 0, 0), 0.2), Material = Enum.Material.Brick, Parent = model })
-		P({ Name = "TowerTop", ClassName = "WedgePart", Size = Vector3.new(5.5, 4, 5.5), CFrame = at(side * (Layout.EntranceWidth / 2 + 2.5), FLOOR_TOP + h + 8, half - 2), Color = color, Material = Enum.Material.SmoothPlastic, Parent = model })
 	end
-	-- ameias no topo da parede de trás
+	-- ameias no topo
 	for x = -half + 3, half - 3, 6 do
-		P({ Name = "Merlon", Size = Vector3.new(3, 2, wallT), CFrame = at(x, FLOOR_TOP + h + 1, -half + wallT / 2), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
+		P({ Name = "Merlon", Size = Vector3.new(3, 2, wallT), CFrame = at(x, FLOOR_TOP + totalH + 1, -half + wallT / 2), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
+	end
+	for z = -half + 3, half - 3, 6 do
+		for _, side in ipairs({ -1, 1 }) do
+			P({ Name = "Merlon", Size = Vector3.new(wallT, 2, 3), CFrame = at(side * (half - wallT / 2), FLOOR_TOP + totalH + 1, z), Color = wallColor, Material = Enum.Material.Brick, Parent = model })
+		end
+	end
+	-- torres nos cantos com telhado em camadas e bandeira
+	for _, cx in ipairs({ -1, 1 }) do
+		for _, cz in ipairs({ -1, 1 }) do
+			local tx, tz = cx * (half - 2), cz * (half - 2)
+			local towerH = totalH + 6
+			P({ Name = "Tower", Shape = Enum.PartType.Cylinder, Size = Vector3.new(towerH, 7, 7), CFrame = at(tx, FLOOR_TOP + towerH / 2, tz) * CFrame.Angles(0, 0, math.pi / 2),
+				Color = wallColor:Lerp(Color3.new(0, 0, 0), 0.15), Material = Enum.Material.Brick, Parent = model })
+			for i = 0, 3 do
+				local w = 9 - i * 2.2
+				P({ Name = "TowerRoof", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.6, w, w), CFrame = at(tx, FLOOR_TOP + towerH + 0.8 + i * 1.6, tz) * CFrame.Angles(0, 0, math.pi / 2),
+					Color = color, Material = Enum.Material.SmoothPlastic, Parent = model })
+			end
+			P({ Name = "FlagPole", Size = Vector3.new(0.4, 6, 0.4), CFrame = at(tx, FLOOR_TOP + towerH + 9, tz), Color = Color3.fromRGB(60, 50, 40), Parent = model })
+			local flag = P({ Name = "Flag", Size = Vector3.new(3.4, 2.2, 0.2), CFrame = at(tx + 1.9, FLOOR_TOP + towerH + 10.8, tz), Color = color, Material = Enum.Material.Fabric, CanCollide = false, Parent = model })
+			surfaceText(flag, Enum.NormalId.Front, "🐉")
+			surfaceText(flag, Enum.NormalId.Back, "🐉")
+		end
+	end
+
+	-- 2º andar (com buraco sobre a escada)
+	local slabY = FLOOR_TOP + up - 0.5
+	local inner = Layout.BaseSize - 2 * wallT
+	local sideW = inner / 2 - stairsW / 2
+	for _, side in ipairs({ -1, 1 }) do
+		P({ Name = "UpperFloor", Size = Vector3.new(sideW, 1, inner), CFrame = at(side * (stairsW / 2 + sideW / 2), slabY, 0), Color = light, Material = Enum.Material.WoodPlanks, Parent = model })
+	end
+	local holeBack, holeFront = -half + wallT + 2, -2
+	P({ Name = "UpperFloor", Size = Vector3.new(stairsW, 1, 2), CFrame = at(0, slabY, holeBack - 1), Color = light, Material = Enum.Material.WoodPlanks, Parent = model })
+	P({ Name = "UpperFloor", Size = Vector3.new(stairsW, 1, half - wallT - holeFront), CFrame = at(0, slabY, (holeFront + half - wallT) / 2), Color = light, Material = Enum.Material.WoodPlanks, Parent = model })
+	P({ Name = "UpperAisle", Size = Vector3.new(4, 0.1, inner - 4), CFrame = at(-stairsW / 2 - 4, slabY + 0.55, 0), Color = color, Material = Enum.Material.Fabric, CanCollide = false, Parent = model })
+	P({ Name = "UpperAisle", Size = Vector3.new(4, 0.1, inner - 4), CFrame = at(stairsW / 2 + 4, slabY + 0.55, 0), Color = color, Material = Enum.Material.Fabric, CanCollide = false, Parent = model })
+	-- grade de vidro na frente do 2º andar e em volta do buraco da escada
+	local railH = 8
+	P({ Name = "GlassRail", Size = Vector3.new(inner, railH, 0.4), CFrame = at(0, slabY + 0.5 + railH / 2, half - wallT / 2), Color = Color3.fromRGB(180, 230, 255),
+		Material = Enum.Material.Glass, Transparency = 0.55, Parent = model })
+	P({ Name = "RailTop", Size = Vector3.new(inner, 0.4, 0.6), CFrame = at(0, slabY + 0.5 + railH, half - wallT / 2), Color = color, Material = Enum.Material.Neon, Parent = model })
+	for _, side in ipairs({ -1, 1 }) do
+		P({ Name = "StairRail", Size = Vector3.new(0.3, 3, holeFront - holeBack), CFrame = at(side * (stairsW / 2 + 0.2), slabY + 2, (holeBack + holeFront) / 2), Color = Color3.fromRGB(180, 230, 255),
+			Material = Enum.Material.Glass, Transparency = 0.5, Parent = model })
+	end
+	-- pilares segurando o 2º andar
+	for _, x in ipairs({ -stairsW / 2 - 1, stairsW / 2 + 1 }) do
+		for _, z in ipairs({ 6, 20 }) do
+			P({ Name = "Pillar", Shape = Enum.PartType.Cylinder, Size = Vector3.new(up - 1, 1.6, 1.6), CFrame = at(x, FLOOR_TOP + (up - 1) / 2, z) * CFrame.Angles(0, 0, math.pi / 2),
+				Color = Color3.fromRGB(235, 230, 220), Material = Enum.Material.Marble, Parent = model })
+		end
+	end
+	-- escada (sobe para o fundo)
+	local steps = 15
+	local run = (holeFront - holeBack)
+	for i = 1, steps do
+		local depth = run / steps
+		local z = holeFront - (i - 0.5) * depth
+		local topY = FLOOR_TOP + i * (up / steps)
+		P({ Name = "Step", Size = Vector3.new(stairsW, topY - FLOOR_TOP, depth), CFrame = at(0, FLOOR_TOP + (topY - FLOOR_TOP) / 2, z),
+			Color = i % 2 == 0 and light or light:Lerp(color, 0.25), Material = Enum.Material.WoodPlanks, Parent = model })
 	end
 
 	-- barreira de laser na entrada
-	local barrier = P({ Name = "Barrier", Size = Vector3.new(Layout.EntranceWidth, h + 6, 0.6), CFrame = at(0, FLOOR_TOP + (h + 6) / 2, half - 1),
+	local barrier = P({ Name = "Barrier", Size = Vector3.new(Layout.EntranceWidth, h, 0.6), CFrame = at(0, FLOOR_TOP + h / 2, half - 1),
 		Color = Color3.fromRGB(255, 40, 40), Material = Enum.Material.ForceField, Transparency = 1, CanCollide = false, Parent = model })
 	barrier.CastShadow = false
+	for _, side in ipairs({ -1, 1 }) do
+		P({ Name = "LaserPost", Size = Vector3.new(1.2, h, 1.2), CFrame = at(side * (Layout.EntranceWidth / 2 + 0.6), FLOOR_TOP + h / 2, half - 1),
+			Color = Color3.fromRGB(40, 40, 50), Material = Enum.Material.Metal, Parent = model })
+		P({ Name = "LaserLight", Size = Vector3.new(0.4, h - 1, 0.4), CFrame = at(side * (Layout.EntranceWidth / 2 + 0.6), FLOOR_TOP + h / 2, half - 0.3),
+			Color = Color3.fromRGB(255, 60, 60), Material = Enum.Material.Neon, CanCollide = false, Parent = model })
+	end
 
 	-- botão de trancar
 	local lock = P({ Name = "LockButton", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.6, 6, 6), CFrame = at(Layout.LockButton.X, FLOOR_TOP + 0.3, Layout.LockButton.Z) * CFrame.Angles(0, 0, math.pi / 2),
 		Color = Color3.fromRGB(60, 220, 90), Material = Enum.Material.Neon, Parent = model })
+	P({ Name = "LockRing", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.4, 7.4, 7.4), CFrame = at(Layout.LockButton.X, FLOOR_TOP + 0.2, Layout.LockButton.Z) * CFrame.Angles(0, 0, math.pi / 2),
+		Color = Color3.fromRGB(40, 40, 50), Material = Enum.Material.Metal, Parent = model })
 	local lockGui = Instance.new("BillboardGui")
 	lockGui.Name = "LockGui"
-	lockGui.Size = UDim2.fromOffset(200, 60)
+	lockGui.Size = UDim2.fromOffset(220, 60)
 	lockGui.StudsOffsetWorldSpace = Vector3.new(0, 4, 0)
 	lockGui.MaxDistance = 80
-	lockGui.AlwaysOnTop = false
 	lockGui.Parent = lock
 	label(lockGui, "🔓 PISE PARA TRANCAR", { Name = "Text" })
 
 	-- placa com o nome do dono
-	local sign = P({ Name = "Sign", Size = Vector3.new(Layout.EntranceWidth + 10, 5, 1), CFrame = at(0, FLOOR_TOP + h + 3.5, half - 1), Color = Color3.fromRGB(45, 30, 25), Material = Enum.Material.Wood, Parent = model })
+	local sign = P({ Name = "Sign", Size = Vector3.new(Layout.EntranceWidth + 10, 5, 1), CFrame = at(0, FLOOR_TOP + h + 3, half + 0.6),
+		Color = Color3.fromRGB(45, 30, 25), Material = Enum.Material.Wood, Parent = model })
+	P({ Name = "SignFrame", Size = Vector3.new(Layout.EntranceWidth + 11, 6, 0.6), CFrame = at(0, FLOOR_TOP + h + 3, half + 0.2), Color = color, Material = Enum.Material.Neon, Parent = model })
 	local _, signFront = surfaceText(sign, Enum.NormalId.Back, "BASE LIVRE")
 	signFront.Name = "OwnerText"
 	local _, signBack = surfaceText(sign, Enum.NormalId.Front, "BASE LIVRE")
 	signBack.Name = "OwnerText"
 
-	-- placar acima da entrada (cadeado/timer)
 	local statusGui = Instance.new("BillboardGui")
 	statusGui.Name = "StatusGui"
 	statusGui.Size = UDim2.fromOffset(260, 50)
-	statusGui.StudsOffsetWorldSpace = Vector3.new(0, 6, 0)
+	statusGui.StudsOffsetWorldSpace = Vector3.new(0, 5, 0)
 	statusGui.MaxDistance = 200
 	statusGui.Parent = sign
 	label(statusGui, "", { Name = "Text", TextColor3 = Color3.fromRGB(255, 90, 90) })
@@ -3603,15 +4196,19 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 		slot.Name = "Slot" .. i
 		slot:SetAttribute("Index", i)
 		slot.Parent = slots
-		local pedestal = P({ Name = "Pedestal", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.2, 7, 7),
-			CFrame = at(pos.X, FLOOR_TOP + 0.6, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = Color3.fromRGB(235, 235, 240), Material = Enum.Material.Marble, Parent = slot })
+		local y = FLOOR_TOP + pos.Y
+		local pedestal = P({ Name = "Pedestal", Shape = Enum.PartType.Cylinder, Size = Vector3.new(1.2, 7.5, 7.5),
+			CFrame = at(pos.X, y + 0.6, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = Color3.fromRGB(240, 238, 245), Material = Enum.Material.Marble, Parent = slot })
+		P({ Name = "PedestalBase", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.5, 8.6, 8.6),
+			CFrame = at(pos.X, y + 0.25, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = wallColor, Material = Enum.Material.SmoothPlastic, Parent = slot })
+		P({ Name = "PedestalRing", Shape = Enum.PartType.Cylinder, Size = Vector3.new(0.2, 7.8, 7.8),
+			CFrame = at(pos.X, y + 1.15, pos.Z) * CFrame.Angles(0, 0, math.pi / 2), Color = color, Material = Enum.Material.Neon, CanCollide = false, Parent = slot })
 		slot.PrimaryPart = pedestal
 		local towardAisle = pos.X < 0 and 1 or -1
-		local collect = P({ Name = "Collect", Size = Vector3.new(2.6, 0.3, 4), CFrame = at(pos.X + towardAisle * 5, FLOOR_TOP + 0.15, pos.Z),
+		local collect = P({ Name = "Collect", Size = Vector3.new(2.6, 0.3, 4.4), CFrame = at(pos.X + towardAisle * 6.2, y + 0.15, pos.Z),
 			Color = Color3.fromRGB(70, 230, 100), Material = Enum.Material.Neon, Parent = slot })
 		collect:SetAttribute("SlotIndex", i)
-		-- ponto onde o dragão fica, olhando para o corredor
-		local standLocal = CFrame.lookAt(Vector3.new(pos.X, FLOOR_TOP + 1.2, pos.Z), Vector3.new(pos.X + towardAisle, FLOOR_TOP + 1.2, pos.Z))
+		local standLocal = CFrame.lookAt(Vector3.new(pos.X, y + 1.2, pos.Z), Vector3.new(pos.X + towardAisle, y + 1.2, pos.Z))
 		local stand = Instance.new("CFrameValue")
 		stand.Name = "Stand"
 		stand.Value = baseCF * standLocal
@@ -3625,9 +4222,22 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 		info.Enabled = false
 		info.Parent = collect
 		local frame = Instance.new("Frame")
-		frame.BackgroundTransparency = 1
+		frame.BackgroundColor3 = Color3.fromRGB(20, 15, 30)
+		frame.BackgroundTransparency = 0.35
 		frame.Size = UDim2.fromScale(1, 1)
 		frame.Parent = info
+		local corner = Instance.new("UICorner")
+		corner.CornerRadius = UDim.new(0, 12)
+		corner.Parent = frame
+		local stroke = Instance.new("UIStroke")
+		stroke.Name = "Stroke"
+		stroke.Thickness = 2
+		stroke.Color = color
+		stroke.Parent = frame
+		local pad = Instance.new("UIPadding")
+		pad.PaddingTop = UDim.new(0, 3)
+		pad.PaddingBottom = UDim.new(0, 3)
+		pad.Parent = frame
 		local layout = Instance.new("UIListLayout")
 		layout.SortOrder = Enum.SortOrder.LayoutOrder
 		layout.HorizontalAlignment = Enum.HorizontalAlignment.Center
@@ -3640,17 +4250,19 @@ local function buildBase(map: Instance, index: number, baseCF: CFrame)
 	end
 
 	-- ponto de nascimento do dono
-	local spawn = P({ ClassName = "SpawnLocation", Name = "Spawn", Size = Vector3.new(6, 0.2, 6), CFrame = at(Layout.SpawnPoint.X, FLOOR_TOP + 0.1, Layout.SpawnPoint.Z) * CFrame.Angles(0, math.pi, 0),
+	local spawn = P({ ClassName = "SpawnLocation", Name = "Spawn", Size = Vector3.new(6, 0.2, 6), CFrame = at(Layout.SpawnPoint.X, FLOOR_TOP + 0.1, Layout.SpawnPoint.Z),
 		Transparency = 1, CanCollide = false, Neutral = true, Duration = 0, Parent = model })
 	spawn.CanTouch = false
 
-	-- luz central
-	local light = P({ Name = "BaseLight", Size = Vector3.new(1, 1, 1), CFrame = at(0, FLOOR_TOP + h - 1, -half + 3), Transparency = 1, CanCollide = false, Parent = model })
-	local pl = Instance.new("PointLight")
-	pl.Range = 40
-	pl.Brightness = 0.8
-	pl.Color = color
-	pl.Parent = light
+	-- luzes
+	for _, y in ipairs({ FLOOR_TOP + up - 2, FLOOR_TOP + up + 7 }) do
+		local bulb = P({ Name = "BaseLight", Size = Vector3.new(1, 1, 1), CFrame = at(0, y, 0), Transparency = 1, CanCollide = false, Parent = model })
+		local pl = Instance.new("PointLight")
+		pl.Range = 45
+		pl.Brightness = 0.9
+		pl.Color = color:Lerp(Color3.new(1, 1, 1), 0.5)
+		pl.Parent = bulb
+	end
 
 	return model
 end
@@ -3757,7 +4369,10 @@ end
 
 local function setupLighting()
 	Lighting.ClockTime = 14.5
-	Lighting.Brightness = 2.5
+	Lighting.Brightness = 3
+	Lighting.ShadowSoftness = 0.35
+	Lighting.ColorShift_Top = Color3.fromRGB(255, 240, 220)
+	Lighting.OutdoorAmbient = Color3.fromRGB(150, 140, 150)
 	Lighting.EnvironmentDiffuseScale = 0.6
 	Lighting.EnvironmentSpecularScale = 0.6
 
@@ -3783,8 +4398,8 @@ local function setupLighting()
 
 	local cc = Lighting:FindFirstChild("BaseColor") or Instance.new("ColorCorrectionEffect")
 	cc.Name = "BaseColor"
-	cc.Saturation = 0.15
-	cc.Contrast = 0.05
+	cc.Saturation = 0.22
+	cc.Contrast = 0.08
 	cc.Parent = Lighting
 
 	local rays = Lighting:FindFirstChildOfClass("SunRaysEffect") or Instance.new("SunRaysEffect")
@@ -3813,8 +4428,8 @@ function MapService:Init()
 	env.Name = "Environment"
 	env.Parent = map
 
-	-- chão
-	P({ Name = "Ground", Size = Vector3.new(760, 4, 560), Position = Vector3.new(20, -2, 0), Color = Color3.fromRGB(95, 165, 75), Material = Enum.Material.Grass, Parent = env })
+	-- chão de terreno (grama, rios, montanhas)
+	buildTerrain()
 	P({ Name = "Path", Size = Vector3.new(420, 0.1, 40), Position = Vector3.new(10, 0.05, 0), Color = Color3.fromRGB(170, 160, 145), Material = Enum.Material.Cobblestone, Parent = env })
 	for _, z in ipairs({ -1, 1 }) do
 		for x = -170, 170, 40 do
@@ -3834,32 +4449,37 @@ function MapService:Init()
 
 	buildPlaza(map)
 
-	-- árvores e pedras em volta da área de jogo
-	for _ = 1, 70 do
-		local x = rng:NextNumber(-300, 330)
-		local z = rng:NextNumber(-250, 250)
+	-- árvores, pinheiros, pedras e flores em volta da área de jogo
+	for _ = 1, 140 do
+		local x = rng:NextNumber(-330, 380)
+		local z = rng:NextNumber(-215, 215)
 		local insidePlay = math.abs(z) < 112 and x > -215 and x < 275
-		if not insidePlay then
-			if rng:NextNumber() < 0.7 then
+		local inRiver = math.abs(math.abs(z) - 142) < 20
+		if not insidePlay and not inRiver then
+			local roll = rng:NextNumber()
+			if roll < 0.45 then
 				buildTree(env, Vector3.new(x, 0, z), rng:NextNumber(0.9, 1.6))
+			elseif roll < 0.8 then
+				buildPine(env, Vector3.new(x, 0, z), rng:NextNumber(0.9, 1.5))
 			else
 				buildRock(env, Vector3.new(x, 0, z), rng:NextNumber(3, 8))
 			end
 		end
 	end
-	-- árvores entre as bases
+	-- árvores e flores entre as bases e nas calçadas
 	for _, x in ipairs({ -160, -80, 0, 80, 160 }) do
 		for _, z in ipairs({ -72, 72 }) do
 			buildTree(env, Vector3.new(x, 0, z), 1.1)
+			buildFlowers(env, Vector3.new(x, 0, z), 6, 10)
+		end
+	end
+	for x = -180, 180, 45 do
+		for _, z in ipairs({ -30, 30 }) do
+			buildFlowers(env, Vector3.new(x + 20, 0, z), 4, 6)
 		end
 	end
 
-	-- montanhas ao redor e vulcão
-	for i = 0, 11 do
-		local x = -330 + i * 60
-		buildMountain(env, Vector3.new(x, 0, -275), Vector3.new(90, rng:NextNumber(60, 110), 40), Color3.fromRGB(110, 100, 95))
-		buildMountain(env, Vector3.new(x, 0, 275), Vector3.new(90, rng:NextNumber(60, 110), 40), Color3.fromRGB(110, 100, 95))
-	end
+	-- vulcão ao fundo
 	buildVolcano(env, Vector3.new(-40, 0, -420))
 
 	-- paredes invisíveis (limite do mapa)
@@ -3885,7 +4505,7 @@ return MapService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="30">
+        <Item class="ModuleScript" referent="34">
           <Properties>
             <string name="Name">MonetizationService</string>
             <string name="Source"><![CDATA[-- Gamepasses e Produtos (Robux). Processa compras com segurança (sem duplicar).
@@ -4101,7 +4721,7 @@ return MonetizationService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="31">
+        <Item class="ModuleScript" referent="35">
           <Properties>
             <string name="Name">MovementService</string>
             <string name="Source"><![CDATA[-- Controla velocidade/pulo dos jogadores juntando todos os efeitos
@@ -4147,7 +4767,7 @@ function MovementService:Recompute(player: Player)
 			speed += Config.SpeedCoilBonus
 		end
 		if s.GravityCoil then
-			jump = 22
+			jump = 16
 		end
 		if now < s.InvisibleUntil then
 			speed += 8
@@ -4297,7 +4917,7 @@ return MovementService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="32">
+        <Item class="ModuleScript" referent="36">
           <Properties>
             <string name="Name">PlayerService</string>
             <string name="Source"><![CDATA[-- Entrada e saída de jogadores: carregar dados, dar base, nascer, salvar.
@@ -4418,7 +5038,7 @@ return PlayerService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="33">
+        <Item class="ModuleScript" referent="37">
           <Properties>
             <string name="Name">RebirthService</string>
             <string name="Source"><![CDATA[-- Rebirth: zera dinheiro, dragões e equipamentos comprados com dinheiro,
@@ -4502,7 +5122,7 @@ return RebirthService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="34">
+        <Item class="ModuleScript" referent="38">
           <Properties>
             <string name="Name">RewardService</string>
             <string name="Source"><![CDATA[-- Recompensas para quem joga de graça: presentes por tempo, prêmio diário,
@@ -4699,7 +5319,7 @@ return RewardService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="35">
+        <Item class="ModuleScript" referent="39">
           <Properties>
             <string name="Name">StateService</string>
             <string name="Source"><![CDATA[-- Envia ao cliente os dados que a interface precisa, e mantém o placar (leaderstats).
@@ -4827,7 +5447,7 @@ return StateService
 ]]></string>
           </Properties>
         </Item>
-        <Item class="ModuleScript" referent="36">
+        <Item class="ModuleScript" referent="40">
           <Properties>
             <string name="Name">StealService</string>
             <string name="Source"><![CDATA[-- Roubo: segurar E no dragão de outra base, carregar na cabeça e levar até a sua base.
@@ -5063,32 +5683,32 @@ return StealService
       </Item>
     </Item>
   </Item>
-  <Item class="SoundService" referent="37">
+  <Item class="SoundService" referent="41">
     <Properties>
       <string name="Name">SoundService</string>
       <bool name="RespectFilteringEnabled">true</bool>
     </Properties>
   </Item>
-  <Item class="StarterPlayer" referent="38">
+  <Item class="StarterPlayer" referent="42">
     <Properties>
       <string name="Name">StarterPlayer</string>
       <float name="CharacterJumpHeight">7.2</float>
       <bool name="CharacterUseJumpPower">false</bool>
       <float name="CharacterWalkSpeed">20</float>
     </Properties>
-    <Item class="StarterPlayerScripts" referent="39">
+    <Item class="StarterPlayerScripts" referent="43">
       <Properties>
         <string name="Name">StarterPlayerScripts</string>
       </Properties>
-      <Item class="Folder" referent="40">
+      <Item class="Folder" referent="44">
         <Properties>
           <string name="Name">Client</string>
         </Properties>
-        <Item class="Folder" referent="41">
+        <Item class="Folder" referent="45">
           <Properties>
             <string name="Name">Controllers</string>
           </Properties>
-          <Item class="ModuleScript" referent="42">
+          <Item class="ModuleScript" referent="46">
             <Properties>
               <string name="Name">EffectsController</string>
               <string name="Source"><![CDATA[-- Efeitos visuais vindos do servidor: dinheiro flutuando, empurrões, confete,
@@ -5335,7 +5955,7 @@ return EffectsController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="43">
+          <Item class="ModuleScript" referent="47">
             <Properties>
               <string name="Name">GamepadController</string>
               <string name="Source"><![CDATA[-- Suporte a controle (Xbox / PlayStation / controle no PC).
@@ -5431,7 +6051,7 @@ return GamepadController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="44">
+          <Item class="ModuleScript" referent="48">
             <Properties>
               <string name="Name">HudController</string>
               <string name="Source"><![CDATA[-- Interface fixa: dinheiro, renda, botões do menu, evento atual, status da base.
@@ -5470,6 +6090,8 @@ function HudController:Init(App)
 		Parent = gui,
 	})
 	UI.gradient(Color3.fromRGB(90, 220, 100), Color3.fromRGB(30, 130, 50)).Parent = cashFrame
+	UI.label({ Text = "💰", Size = UDim2.fromOffset(52, 52), Position = UDim2.new(0, -18, 0.5, -26), MaxText = 44, Parent = cashFrame })
+	UI.shine(cashFrame)
 	self.CashLabel = UI.label({ Text = "$0", Size = UDim2.new(1, -10, 0.65, 0), Position = UDim2.fromOffset(5, 2), MaxText = 40, Parent = cashFrame })
 	self.IncomeLabel = UI.label({ Text = "+$0/s", Size = UDim2.new(1, -10, 0.32, 0), Position = UDim2.new(0, 5, 0.64, 0), MaxText = 20,
 		TextColor3 = Color3.fromRGB(230, 255, 200), Parent = cashFrame })
@@ -5510,6 +6132,9 @@ function HudController:Init(App)
 		local badge = UI.frame({ Name = "Badge", Size = UDim2.fromOffset(24, 24), Position = UDim2.new(1, -18, 0, -8), BackgroundColor3 = UI.Colors.Red, Visible = false, Radius = 12, Parent = b })
 		UI.label({ Text = "!", Size = UDim2.fromScale(1, 1), Parent = badge })
 		self.MenuButtons[item.Panel] = b
+		if item.Panel == "Robux" or item.Panel == "Rewards" then
+			UI.shine(b)
+		end
 	end
 	self.AdminButton = UI.button({ Text = "", Color = UI.Colors.Red, LayoutOrder = 99, Parent = menu }, function()
 		App.Controllers.PanelController:Open("Admin")
@@ -5654,7 +6279,7 @@ return HudController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="45">
+          <Item class="ModuleScript" referent="49">
             <Properties>
               <string name="Name">NotifyController</string>
               <string name="Source"><![CDATA[-- Mensagens na tela: pequenas (canto) e grandes (centro).
@@ -5664,6 +6289,8 @@ local TweenService = game:GetService("TweenService")
 local UI = require(script.Parent.UI)
 
 local NotifyController = {}
+
+local KIND_ICONS = { info = "💬", success = "✅", error = "❌", warning = "⚠️", rare = "✨" }
 
 local KIND_COLORS = {
 	info = Color3.fromRGB(70, 130, 230),
@@ -5698,7 +6325,8 @@ function NotifyController:Init(App)
 		ZIndex = 20,
 		Parent = App.Gui,
 	})
-	self.AlertLabel:FindFirstChildOfClass("UIStroke").Thickness = 3
+	self.AlertLabel:FindFirstChildOfClass("UIStroke").Thickness = 4
+	self.AlertGradient = UI.new("UIGradient", { Rotation = 90, Parent = self.AlertLabel })
 end
 
 function NotifyController:Toast(text: string, kind: string?)
@@ -5710,10 +6338,13 @@ function NotifyController:Toast(text: string, kind: string?)
 		LayoutOrder = -math.floor(os.clock() * 100),
 		Parent = self.Toasts,
 	})
+	UI.gradient(color:Lerp(Color3.new(1, 1, 1), 0.15), color:Lerp(Color3.new(0, 0, 0), 0.2)).Parent = frame
+	UI.label({ Text = KIND_ICONS[kind or "info"] or "💬", Size = UDim2.fromOffset(32, 32), Position = UDim2.fromOffset(6, 6), MaxText = 26, Parent = frame })
 	UI.label({
 		Text = text,
-		Size = UDim2.new(1, -16, 1, -8),
-		Position = UDim2.fromOffset(8, 4),
+		Size = UDim2.new(1, -50, 1, -8),
+		Position = UDim2.fromOffset(42, 4),
+		TextXAlignment = Enum.TextXAlignment.Left,
 		MaxText = 20,
 		TextWrapped = true,
 		Parent = frame,
@@ -5752,7 +6383,9 @@ function NotifyController:Alert(text: string, color: Color3?)
 	local token = alertToken
 	local l = self.AlertLabel
 	l.Text = text
-	l.TextColor3 = color or Color3.new(1, 1, 1)
+	local base = color or Color3.new(1, 1, 1)
+	l.TextColor3 = Color3.new(1, 1, 1)
+	self.AlertGradient.Color = ColorSequence.new(base:Lerp(Color3.new(1, 1, 1), 0.5), base)
 	l.TextTransparency = 0
 	l.Visible = true
 	UI.pop(l)
@@ -5780,7 +6413,7 @@ return NotifyController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="46">
+          <Item class="ModuleScript" referent="50">
             <Properties>
               <string name="Name">PanelController</string>
               <string name="Source"><![CDATA[-- Abre/fecha as janelas (Loja, Robux, Rebirth, Índice, Presentes, Códigos, Config, Admin).
@@ -5820,6 +6453,7 @@ function PanelController:Init(App)
 			Parent = App.Gui,
 		})
 		UI.gradient(UI.Colors.PanelLight, UI.Colors.Panel).Parent = frame
+		UI.shadow(frame)
 		local header = UI.frame({
 			Name = "Header",
 			Size = UDim2.new(1, 0, 0, 56),
@@ -5916,7 +6550,7 @@ return PanelController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="47">
+          <Item class="ModuleScript" referent="51">
             <Properties>
               <string name="Name">SoundController</string>
               <string name="Source"><![CDATA[-- Toca efeitos sonoros e a música de fundo (IDs em Shared/Sounds).
@@ -6001,7 +6635,7 @@ return SoundController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="48">
+          <Item class="ModuleScript" referent="52">
             <Properties>
               <string name="Name">TutorialController</string>
               <string name="Source"><![CDATA[-- Tutorial para jogadores novos, com seta guiando cada passo.
@@ -6103,7 +6737,7 @@ return TutorialController
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="49">
+          <Item class="ModuleScript" referent="53">
             <Properties>
               <string name="Name">UI</string>
               <string name="Source"><![CDATA[-- Pequena biblioteca para criar a interface com o mesmo estilo em tudo.
@@ -6278,6 +6912,42 @@ function UI.scroll(props)
 	return UI.new("ScrollingFrame", defaults)
 end
 
+-- faixa de brilho que passa pelo botão de tempos em tempos
+function UI.shine(button: GuiObject)
+	local holder = UI.new("Frame", { Name = "Shine", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ClipsDescendants = true, ZIndex = button.ZIndex + 2, Parent = button })
+	UI.corner(12).Parent = holder
+	local streak = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.55, BorderSizePixel = 0,
+		Size = UDim2.new(0.25, 0, 2, 0), Position = UDim2.new(-0.4, 0, -0.5, 0), Rotation = 20, ZIndex = button.ZIndex + 2, Parent = holder })
+	UI.new("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }), Parent = streak })
+	task.spawn(function()
+		while holder.Parent do
+			streak.Position = UDim2.new(-0.4, 0, -0.5, 0)
+			TweenService:Create(streak, TweenInfo.new(0.7, Enum.EasingStyle.Quad), { Position = UDim2.new(1.2, 0, -0.5, 0) }):Play()
+			task.wait(3 + math.random())
+		end
+	end)
+end
+
+-- sombra suave atrás de um frame
+function UI.shadow(frame: GuiObject)
+	local shadow = UI.new("Frame", {
+		Name = "Shadow",
+		AnchorPoint = frame.AnchorPoint,
+		Position = frame.Position + UDim2.fromOffset(6, 8),
+		Size = frame.Size,
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.6,
+		ZIndex = frame.ZIndex - 1,
+		Visible = frame.Visible,
+		Parent = frame.Parent,
+	})
+	UI.corner(16).Parent = shadow
+	frame:GetPropertyChangedSignal("Visible"):Connect(function()
+		shadow.Visible = frame.Visible
+	end)
+	return shadow
+end
+
 function UI.pop(inst: GuiObject)
 	local scale = inst:FindFirstChildOfClass("UIScale") or UI.new("UIScale", { Parent = inst })
 	scale.Scale = 0.6
@@ -6288,7 +6958,7 @@ return UI
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="50">
+          <Item class="ModuleScript" referent="54">
             <Properties>
               <string name="Name">WorldController</string>
               <string name="Source"><![CDATA[-- Coisas do mundo no cliente: quais botões (E/F) aparecem, barreira de laser,
@@ -6340,13 +7010,33 @@ end
 
 local animated = {} -- [model] = { welds = {{weld, base, side}}, phase, rainbowParts, glitch }
 
+-- eixo do modelo convertido para o espaço do osso (funciona com qualquer orientação do FBX)
+local function boneAxis(bone: Bone, root: BasePart, modelAxis: Vector3): Vector3
+	local world = root.CFrame:VectorToWorldSpace(modelAxis)
+	return bone.WorldCFrame:VectorToObjectSpace(world).Unit
+end
+
 local function registerDragon(model: Instance)
 	if not model:IsA("Model") then
 		return
 	end
-	local info = { Welds = {}, Phase = math.random() * math.pi * 2, Colored = {} }
+	local info = { Welds = {}, Bones = {}, Phase = math.random() * math.pi * 2, Colored = {} }
+	local root = (model :: Model).PrimaryPart
 	for _, d in ipairs(model:GetDescendants()) do
-		if d:IsA("Weld") and d.Name == "WingJoint" then
+		if d:IsA("Bone") and root then
+			local name = d.Name
+			local side = root.CFrame:PointToObjectSpace(d.WorldPosition).X >= 0 and 1 or -1
+			local tailIndex = tonumber(string.match(name, "^Tail(%d+)$"))
+			if string.match(name, "^Wing[LR]1$") then
+				table.insert(info.Bones, { Bone = d, Kind = "Wing1", Side = side, Axis = boneAxis(d, root, Vector3.new(0, 0, -1)) })
+			elseif string.match(name, "^Wing[LR]2$") then
+				table.insert(info.Bones, { Bone = d, Kind = "Wing2", Side = side, Axis = boneAxis(d, root, Vector3.new(0, 0, -1)) })
+			elseif tailIndex then
+				table.insert(info.Bones, { Bone = d, Kind = "Tail", Index = tailIndex, Axis = boneAxis(d, root, Vector3.new(0, 1, 0)) })
+			elseif string.match(name, "^Neck1") or string.match(name, "^Head") then
+				table.insert(info.Bones, { Bone = d, Kind = "Neck", Axis = boneAxis(d, root, Vector3.new(1, 0, 0)) })
+			end
+		elseif d:IsA("Weld") and d.Name == "WingJoint" then
 			table.insert(info.Welds, { Weld = d, Base = d.C0, Side = d:GetAttribute("Side") or 1 })
 		elseif d:IsA("BasePart") then
 			local role = d:GetAttribute("Role")
@@ -6527,6 +7217,14 @@ function WorldController:Start(App)
 		end
 	end)
 
+	-- gradientes de raridade que giram (Lendário+)
+	RunService.RenderStepped:Connect(function()
+		local rot = (os.clock() * 90) % 360
+		for _, g in ipairs(CollectionService:GetTagged("SpinGradient")) do
+			g.Rotation = rot
+		end
+	end)
+
 	-- animação (30x por segundo)
 	local acc = 0
 	RunService.RenderStepped:Connect(function(dt)
@@ -6547,6 +7245,20 @@ function WorldController:Start(App)
 					local flap = math.sin(t * 5 + info.Phase) * 0.45
 					for _, w in ipairs(info.Welds) do
 						w.Weld.C0 = w.Base * CFrame.Angles(0, 0, w.Side * flap)
+					end
+					-- modelos 3D importados: anima os ossos
+					for _, b in ipairs(info.Bones) do
+						local angle
+						if b.Kind == "Wing1" then
+							angle = b.Side * flap
+						elseif b.Kind == "Wing2" then
+							angle = b.Side * math.sin(t * 5 + info.Phase - 0.7) * 0.3
+						elseif b.Kind == "Tail" then
+							angle = math.sin(t * 2.2 + info.Phase - b.Index * 0.6) * 0.15
+						else
+							angle = math.sin(t * 1.6 + info.Phase) * 0.06
+						end
+						b.Bone.Transform = CFrame.fromAxisAngle(b.Axis, angle)
 					end
 					if info.Rainbow then
 						local color = Color3.fromHSV((t * 0.25 + info.Phase) % 1, 0.8, 1)
@@ -6570,7 +7282,7 @@ return WorldController
             </Properties>
           </Item>
         </Item>
-        <Item class="LocalScript" referent="51">
+        <Item class="LocalScript" referent="55">
           <Properties>
             <string name="Name">Main</string>
             <string name="Source"><![CDATA[-- Inicia todos os controladores do cliente.
@@ -6653,11 +7365,11 @@ end
 ]]></string>
           </Properties>
         </Item>
-        <Item class="Folder" referent="52">
+        <Item class="Folder" referent="56">
           <Properties>
             <string name="Name">Panels</string>
           </Properties>
-          <Item class="ModuleScript" referent="53">
+          <Item class="ModuleScript" referent="57">
             <Properties>
               <string name="Name">Admin</string>
               <string name="Source"><![CDATA[-- Janela: painel de admin (só aparece para o dono do jogo/admins).
@@ -6757,7 +7469,7 @@ return Admin
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="54">
+          <Item class="ModuleScript" referent="58">
             <Properties>
               <string name="Name">Codes</string>
               <string name="Source"><![CDATA[-- Janela: resgatar códigos.
@@ -6798,7 +7510,7 @@ return Codes
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="55">
+          <Item class="ModuleScript" referent="59">
             <Properties>
               <string name="Name">Index</string>
               <string name="Source"><![CDATA[-- Janela: Índice de dragões (coleção). Completar uma raridade dá +5% de renda.
@@ -6895,7 +7607,7 @@ return Index
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="56">
+          <Item class="ModuleScript" referent="60">
             <Properties>
               <string name="Name">Rebirth</string>
               <string name="Source"><![CDATA[-- Janela: Rebirth.
@@ -6976,7 +7688,7 @@ return Rebirth
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="57">
+          <Item class="ModuleScript" referent="61">
             <Properties>
               <string name="Name">Rewards</string>
               <string name="Source"><![CDATA[-- Janela: Presentes por tempo jogado + prêmio diário.
@@ -7067,7 +7779,7 @@ return Rewards
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="58">
+          <Item class="ModuleScript" referent="62">
             <Properties>
               <string name="Name">Robux</string>
               <string name="Source"><![CDATA[-- Janela: Loja VIP (gamepasses e produtos de Robux).
@@ -7199,7 +7911,7 @@ return Robux
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="59">
+          <Item class="ModuleScript" referent="63">
             <Properties>
               <string name="Name">Settings</string>
               <string name="Source"><![CDATA[-- Janela: configurações (música e efeitos sonoros).
@@ -7240,7 +7952,7 @@ return Settings
 ]]></string>
             </Properties>
           </Item>
-          <Item class="ModuleScript" referent="60">
+          <Item class="ModuleScript" referent="64">
             <Properties>
               <string name="Name">Shop</string>
               <string name="Source"><![CDATA[-- Janela: Loja de Equipamentos (dinheiro do jogo).
@@ -7306,7 +8018,7 @@ return Shop
       </Item>
     </Item>
   </Item>
-  <Item class="Workspace" referent="61">
+  <Item class="Workspace" referent="65">
     <Properties>
       <string name="Name">Workspace</string>
       <float name="Gravity">196.2</float>

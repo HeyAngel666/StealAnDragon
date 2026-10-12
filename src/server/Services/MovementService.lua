@@ -41,7 +41,7 @@ function MovementService:Recompute(player: Player)
 			speed += Config.SpeedCoilBonus
 		end
 		if s.GravityCoil then
-			jump = 22
+			jump = 16
 		end
 		if now < s.InvisibleUntil then
 			speed += 8

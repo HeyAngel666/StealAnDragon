@@ -170,6 +170,42 @@ function UI.scroll(props)
 	return UI.new("ScrollingFrame", defaults)
 end
 
+-- faixa de brilho que passa pelo botão de tempos em tempos
+function UI.shine(button: GuiObject)
+	local holder = UI.new("Frame", { Name = "Shine", BackgroundTransparency = 1, Size = UDim2.fromScale(1, 1), ClipsDescendants = true, ZIndex = button.ZIndex + 2, Parent = button })
+	UI.corner(12).Parent = holder
+	local streak = UI.new("Frame", { BackgroundColor3 = Color3.new(1, 1, 1), BackgroundTransparency = 0.55, BorderSizePixel = 0,
+		Size = UDim2.new(0.25, 0, 2, 0), Position = UDim2.new(-0.4, 0, -0.5, 0), Rotation = 20, ZIndex = button.ZIndex + 2, Parent = holder })
+	UI.new("UIGradient", { Transparency = NumberSequence.new({ NumberSequenceKeypoint.new(0, 1), NumberSequenceKeypoint.new(0.5, 0), NumberSequenceKeypoint.new(1, 1) }), Parent = streak })
+	task.spawn(function()
+		while holder.Parent do
+			streak.Position = UDim2.new(-0.4, 0, -0.5, 0)
+			TweenService:Create(streak, TweenInfo.new(0.7, Enum.EasingStyle.Quad), { Position = UDim2.new(1.2, 0, -0.5, 0) }):Play()
+			task.wait(3 + math.random())
+		end
+	end)
+end
+
+-- sombra suave atrás de um frame
+function UI.shadow(frame: GuiObject)
+	local shadow = UI.new("Frame", {
+		Name = "Shadow",
+		AnchorPoint = frame.AnchorPoint,
+		Position = frame.Position + UDim2.fromOffset(6, 8),
+		Size = frame.Size,
+		BackgroundColor3 = Color3.new(0, 0, 0),
+		BackgroundTransparency = 0.6,
+		ZIndex = frame.ZIndex - 1,
+		Visible = frame.Visible,
+		Parent = frame.Parent,
+	})
+	UI.corner(16).Parent = shadow
+	frame:GetPropertyChangedSignal("Visible"):Connect(function()
+		shadow.Visible = frame.Visible
+	end)
+	return shadow
+end
+
 function UI.pop(inst: GuiObject)
 	local scale = inst:FindFirstChildOfClass("UIScale") or UI.new("UIScale", { Parent = inst })
 	scale.Scale = 0.6

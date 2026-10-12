@@ -12,6 +12,7 @@ local Mutations = require(Shared.Mutations)
 local Rebirths = require(Shared.Rebirths)
 local Format = require(Shared.Format)
 local DragonBuilder = require(Shared.DragonBuilder)
+local RarityStyle = require(Shared.RarityStyle)
 
 local DragonService = {}
 local friendCache = {} -- [player] = { [userId] = bool }
@@ -138,7 +139,11 @@ function DragonService:UpdateInfo(base, slotIndex: number)
 	frame.Mutation.TextColor3 = mutation.Color or Color3.new(1, 1, 1)
 	frame.DragonName.Text = def.Name
 	frame.Rarity.Text = rarity.Name
-	frame.Rarity.TextColor3 = rarity.Color
+	if frame.Rarity:GetAttribute("RarityId") ~= rarity.Id then
+		frame.Rarity:SetAttribute("RarityId", rarity.Id)
+		RarityStyle.Apply(frame.Rarity, rarity.Id)
+		frame.Stroke.Color = rarity.Color
+	end
 	frame.Income.Text = Format.Cash(self:BaseIncome(entry.Record) * self:GetMultiplier(base.Owner)) .. "/s"
 	if entry.Stealing then
 		frame.Stored.Text = "⚠️ SENDO ROUBADO!"

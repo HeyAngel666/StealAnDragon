@@ -9,7 +9,7 @@ Layout.ConveyorEnd = Vector3.new(185, 1, 0)
 Layout.ConveyorWidth = 12
 
 Layout.BaseSize = 64
-Layout.BaseWallHeight = 18
+Layout.BaseWallHeight = 15
 Layout.EntranceWidth = 18
 
 Layout.PlazaCenter = Vector3.new(225, 0, 0)
@@ -26,19 +26,25 @@ for _, x in ipairs(BASE_X) do
 	table.insert(Layout.Bases, CFrame.new(x, 0, BASE_Z) * CFrame.Angles(0, math.pi, 0))
 end
 
+-- Bases de 2 andares: térreo + andar de cima (escada no meio, ao fundo)
+Layout.UpperFloorY = 15 -- altura do piso do 2º andar (acima do piso do térreo)
+Layout.StairsWidth = 8
+
 -- Slots dentro da base (coordenadas locais; +Z = lado da entrada)
--- 4 colunas x 5 linhas = 20 slots
-local COLUMNS = { -24, -11, 11, 24 }
-local ROWS = { -24, -14, -4, 6, 16 }
+-- 10 no térreo (2 colunas x 5) + 10 no andar de cima
+local COLUMNS = { -22, 22 }
+local ROWS = { -22, -11, 0, 11, 22 }
 Layout.Slots = {}
-for _, z in ipairs(ROWS) do
-	for _, x in ipairs(COLUMNS) do
-		table.insert(Layout.Slots, Vector3.new(x, 0, z))
+for _, floorY in ipairs({ 0, Layout.UpperFloorY }) do
+	for _, z in ipairs(ROWS) do
+		for _, x in ipairs(COLUMNS) do
+			table.insert(Layout.Slots, Vector3.new(x, floorY, z))
+		end
 	end
 end
 
-Layout.LockButton = Vector3.new(0, 0, 22)
-Layout.SpawnPoint = Vector3.new(0, 0, -6)
+Layout.LockButton = Vector3.new(0, 0, 24)
+Layout.SpawnPoint = Vector3.new(0, 0, 12)
 
 -- Verifica se uma posição do mundo está dentro de uma base.
 function Layout.IsInsideBase(baseCFrame: CFrame, position: Vector3): boolean
