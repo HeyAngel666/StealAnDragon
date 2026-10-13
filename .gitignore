@@ -2,3 +2,5 @@
 sourcemap.json
 /tools/bin/
 assets/*.zip
+__pycache__/
+*.pyc
